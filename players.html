@@ -602,7 +602,7 @@ async function fetchStatcastStats(mlbId, type) {
   const year = 2025;
   try {
     // Expected stats leaderboard per player
-    const url = `https://baseballsavant.mlb.com/leaderboard/expected_statistics?type=${type}&year=${year}&position=&team=&min=1&csv=true`;
+    const url = `/api/proxy?type=expected&playerType=${type}&year=${year}`;
     const r   = await fetch(url);
     const txt = await r.text();
     return parseCSV(txt, mlbId);
@@ -611,7 +611,7 @@ async function fetchStatcastStats(mlbId, type) {
 
 async function fetchPitchArsenal(mlbId) {
   try {
-    const url = `https://baseballsavant.mlb.com/leaderboard/pitch-arsenal-stats?type=pitcher&pitchType=&year=2025&team=&min=1&csv=true`;
+    const url = `/api/proxy?type=arsenal&year=2025`;
     const r   = await fetch(url);
     const txt = await r.text();
     return parsePitchCSV(txt, mlbId);
