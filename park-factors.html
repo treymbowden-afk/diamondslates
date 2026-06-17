@@ -293,8 +293,8 @@ function calcParkFactor(weather, stadium, venueId) {
     return { hr: 0, runs: 0, env: 'dome', windOut: 0, components: {} };
   }
 
-  const windFrom = weather.winddirection_10m ?? 180;
-  const windSpd  = weather.windspeed_10m ?? 0;
+  const windFrom = (weather.wind_direction_10m ?? weather.winddirection_10m) ?? 180;
+  const windSpd  = (weather.wind_speed_10m ?? weather.windspeed_10m) ?? 0;
   const tempF    = weather.temperature_2m ?? 70;
 
   const wind = windEffect(windFrom, windSpd, stadium, venueId);
@@ -329,7 +329,7 @@ function pfClass(v){return v>3?'pf-pos':v<-3?'pf-neg':'pf-neu';}
 // ── DATA FETCH ──
 async function fetchWeather(lat,lon){
   try{
-    const url=`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weathercode,windspeed_10m,winddirection_10m&temperature_unit=fahrenheit&windspeed_unit=mph&forecast_days=1`;
+    const url=`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code,wind_speed_10m,wind_direction_10m&temperature_unit=fahrenheit&wind_speed_unit=mph&forecast_days=1`;
     const r=await fetch(url);const d=await r.json();return d.current;
   }catch{return null;}
 }
@@ -375,8 +375,8 @@ async function init(){
       matchup:`${away} @ ${home}`,
       away, home,
       temp: weather.temperature_2m!=null?Math.round(weather.temperature_2m):null,
-      windSpd: weather.windspeed_10m!=null?Math.round(weather.windspeed_10m):null,
-      windDir: weather.winddirection_10m!=null?Math.round(weather.winddirection_10m):null,
+      windSpd: (weather.wind_speed_10m ?? weather.windspeed_10m)!=null?Math.round(weather.wind_speed_10m ?? weather.windspeed_10m):null,
+      windDir: (weather.wind_direction_10m ?? weather.winddirection_10m)!=null?Math.round(weather.wind_direction_10m ?? weather.winddirection_10m):null,
     };
   });
 
