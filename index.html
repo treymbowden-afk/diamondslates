@@ -707,7 +707,7 @@
 <main class="main">
 
   <div class="api-note">
-    <strong>Live Data:</strong> Game schedules pull from the free MLB Stats API. Weather loads from Open-Meteo using each stadium's GPS coordinates. Park factors shown are model estimates based on wind direction, temperature, and altitude. Data refreshes automatically every 5 minutes.
+    <strong>Live Data:</strong> Game schedules pull from the free MLB Stats API. Weather loads using each stadium's GPS coordinates. Park factors shown are model estimates based on wind direction, temperature, and altitude. Data refreshes automatically every 5 minutes.
   </div>
 
   <div class="section-header">
@@ -1017,7 +1017,7 @@ function filterGames(type, btn) {
   });
 }
 
-// ── FETCH WEATHER (Open-Meteo, free, no key) ──
+// ── FETCH WEATHER (via /api/proxy) ──
 async function fetchWeather(lat, lon) {
   try {
     const url = `/api/proxy?type=weather&lat=${lat}&lon=${lon}`;
@@ -1029,7 +1029,7 @@ async function fetchWeather(lat, lon) {
 
 // ── FETCH GAMES (MLB Stats API, free, no key) ──
 async function fetchGames() {
-  const today = new Date().toISOString().split('T')[0];
+  const today = (() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; })();
   const url   = `https://statsapi.mlb.com/api/v1/schedule?sportId=1&date=${today}&hydrate=team,linescore,probablePitcher,venue`;
   const r     = await fetch(url);
   const d     = await r.json();
