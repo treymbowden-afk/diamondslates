@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DiamondSlates — Daily Park Factors</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --navy:#0A1628; --navy-card:#111E33; --navy-deep:#0D1A2E; --navy-hover:#162340;
+    --gold:#C8A84B; --text:#E8EDF2; --text-muted:#6B8CAE; --text-dim:#3D5470;
+    --green:#3CCF74; --red:#E05555; --blue:#4A9EF5; --purple:#9B72DB; --orange:#F5A623;
+    --border:rgba(200,168,75,0.15); --border-dim:rgba(107,140,174,0.12);
+  }
+
+  body { background:var(--navy); color:var(--text); font-family:'Inter',sans-serif; min-height:100vh; }
+
+  /* HEADER */
+  header { background:var(--navy-deep); border-bottom:1px solid var(--border); padding:0 32px; display:flex; align-items:center; justify-content:space-between; height:64px; position:sticky; top:0; z-index:100; }
+  .logo { display:flex; align-items:baseline; gap:6px; text-decoration:none; }
+  .logo-mark { font-family:'Bebas Neue'; font-size:28px; letter-spacing:2px; color:var(--text); }
+  .logo-mark span { color:var(--gold); }
+  .logo-sub { font-size:10px; font-weight:500; letter-spacing:3px; text-transform:uppercase; color:var(--text-muted); }
+  nav { display:flex; gap:28px; }
+  nav a { font-size:12px; font-weight:500; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); text-decoration:none; transition:color .2s; }
+  nav a:hover, nav a.active { color:var(--gold); }
+  .live-badge { display:flex; align-items:center; gap:6px; font-size:11px; font-weight:600; letter-spacing:1px; color:var(--green); text-transform:uppercase; }
+  .live-dot { width:6px; height:6px; background:var(--green); border-radius:50%; animation:pulse 1.8s ease-in-out infinite; }
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.4;transform:scale(.8)} }
+
+  /* HERO */
+  .hero { background:linear-gradient(135deg,#0D1A2E,#111E33 60%,#0A1628); border-bottom:1px solid var(--border); padding:36px 32px 28px; position:relative; overflow:hidden; }
+  .hero::before { content:''; position:absolute; top:-80px; right:-60px; width:360px; height:360px; background:radial-gradient(circle,rgba(200,168,75,.05),transparent 70%); pointer-events:none; }
+  .hero-inner { max-width:1200px; margin:0 auto; position:relative; z-index:1; }
+  .eyebrow { font-size:10px; font-weight:600; letter-spacing:3px; text-transform:uppercase; color:var(--gold); margin-bottom:8px; }
+  .hero-title { font-family:'Bebas Neue'; font-size:clamp(32px,5vw,54px); letter-spacing:3px; color:var(--text); margin-bottom:4px; }
+  .hero-date { font-size:13px; color:var(--text-muted); margin-bottom:8px; }
+
+  /* MAIN */
+  .main { max-width:1200px; margin:0 auto; padding:32px 24px 64px; }
+
+  .controls-row { display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; flex-wrap:wrap; gap:12px; }
+  .view-toggle { display:flex; gap:8px; }
+  .view-btn { font-size:11px; font-weight:500; letter-spacing:1px; text-transform:uppercase; color:var(--text-muted); background:var(--navy-card); border:1px solid var(--border-dim); border-radius:4px; padding:6px 14px; cursor:pointer; transition:all .2s; }
+  .view-btn:hover, .view-btn.active { color:var(--gold); border-color:var(--gold); background:rgba(200,168,75,.05); }
+
+  .sort-label { font-size:11px; color:var(--text-muted); letter-spacing:1px; text-transform:uppercase; }
+
+  /* LEADERBOARD TABLE */
+  .pf-table-wrap { background:var(--navy-card); border:1px solid var(--border-dim); border-radius:12px; overflow:hidden; }
+  .pf-table { width:100%; border-collapse:collapse; font-size:13px; }
+  .pf-table th { font-size:10px; font-weight:700; letter-spacing:1px; text-transform:uppercase; color:var(--text-muted); padding:14px 12px; text-align:center; border-bottom:1px solid var(--border); cursor:pointer; user-select:none; white-space:nowrap; transition:color .2s; }
+  .pf-table th:hover { color:var(--gold); }
+  .pf-table th:first-child { text-align:left; padding-left:20px; }
+  .pf-table th.sorted { color:var(--gold); }
+  .pf-table td { padding:14px 12px; text-align:center; border-bottom:1px solid rgba(61,84,112,.12); }
+  .pf-table td:first-child { text-align:left; padding-left:20px; }
+  .pf-table tbody tr { transition:background .15s; cursor:pointer; }
+  .pf-table tbody tr:hover { background:rgba(255,255,255,.025); }
+  .pf-table tbody tr:last-child td { border-bottom:none; }
+
+  .matchup-cell { display:flex; flex-direction:column; gap:2px; }
+  .matchup-teams { font-family:'Bebas Neue'; font-size:17px; letter-spacing:1.5px; color:var(--text); }
+  .matchup-venue { font-size:10px; color:var(--text-muted); }
+
+  .pf-val { font-family:'JetBrains Mono'; font-size:14px; font-weight:600; }
+  .pf-pos { color:var(--green); }
+  .pf-neg { color:var(--red); }
+  .pf-neu { color:var(--text-muted); }
+
+  .wind-cell { display:flex; flex-direction:column; align-items:center; gap:3px; }
+  .wind-arrow-sm { font-size:16px; transition:transform .5s; }
+  .wind-txt { font-family:'JetBrains Mono'; font-size:11px; color:var(--text-muted); }
+
+  .env-tag { display:inline-block; font-size:9px; font-weight:700; letter-spacing:1px; text-transform:uppercase; padding:3px 8px; border-radius:4px; }
+  .env-hitting { background:rgba(60,207,116,.15); color:var(--green); }
+  .env-pitching { background:rgba(224,85,85,.15); color:var(--red); }
+  .env-neutral { background:rgba(107,140,174,.12); color:var(--text-muted); }
+  .env-dome { background:rgba(155,114,219,.15); color:var(--purple); }
+
+  .temp-cell { font-family:'JetBrains Mono'; font-size:13px; color:var(--text); }
+
+  /* CARD VIEW */
+  .pf-cards { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:14px; }
+  .pf-card { background:var(--navy-card); border:1px solid var(--border-dim); border-radius:10px; overflow:hidden; transition:border-color .2s,transform .2s; cursor:pointer; }
+  .pf-card:hover { border-color:rgba(200,168,75,.35); transform:translateY(-2px); }
+  .pf-card-top { padding:16px; display:flex; justify-content:space-between; align-items:flex-start; }
+  .pf-card-matchup { font-family:'Bebas Neue'; font-size:22px; letter-spacing:2px; }
+  .pf-card-venue { font-size:11px; color:var(--text-muted); margin-top:2px; }
+
+  .pf-gauge { padding:0 16px 12px; }
+  .pf-gauge-bar { height:8px; background:var(--border-dim); border-radius:4px; position:relative; overflow:hidden; margin:8px 0; }
+  .pf-gauge-center { position:absolute; left:50%; top:0; bottom:0; width:1px; background:rgba(255,255,255,.2); }
+  .pf-gauge-fill { height:100%; position:absolute; top:0; transition:all .8s ease; }
+  .pf-gauge-labels { display:flex; justify-content:space-between; font-size:9px; color:var(--text-dim); letter-spacing:1px; }
+
+  .pf-card-stats { display:grid; grid-template-columns:repeat(4,1fr); border-top:1px solid var(--border-dim); }
+  .pf-card-stat { padding:12px 8px; text-align:center; border-right:1px solid var(--border-dim); }
+  .pf-card-stat:last-child { border-right:none; }
+  .pfc-val { font-family:'JetBrains Mono'; font-size:14px; font-weight:600; }
+  .pfc-lbl { font-size:8px; font-weight:600; letter-spacing:1px; text-transform:uppercase; color:var(--text-dim); margin-top:2px; }
+
+  .pf-card-banner { padding:8px 16px; font-size:10px; color:var(--text-muted); background:rgba(0,0,0,.15); border-top:1px solid var(--border-dim); display:flex; gap:6px; align-items:center; }
+
+  /* States */
+  .state-box { padding:60px 32px; text-align:center; display:flex; flex-direction:column; align-items:center; gap:12px; }
+  .state-icon { font-size:40px; }
+  .state-title { font-size:16px; color:var(--text); font-weight:500; }
+  .state-sub { font-size:12px; color:var(--text-muted); max-width:420px; line-height:1.6; }
+  .spinner { width:32px; height:32px; border:2px solid var(--border-dim); border-top-color:var(--gold); border-radius:50%; animation:spin .8s linear infinite; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+
+  /* Methodology note */
+  .method-note { background:rgba(200,168,75,.06); border:1px solid rgba(200,168,75,.2); border-radius:8px; padding:16px 20px; margin-bottom:24px; font-size:12px; color:var(--text-muted); line-height:1.6; }
+  .method-note strong { color:var(--gold); }
+
+  .legend { display:flex; gap:20px; flex-wrap:wrap; margin-top:24px; padding-top:18px; border-top:1px solid var(--border-dim); font-size:11px; color:var(--text-muted); }
+  .legend-item { display:flex; align-items:center; gap:6px; }
+  .legend-dot { width:8px; height:8px; border-radius:2px; }
+
+  @media (max-width:768px) {
+    header { padding:0 16px; } nav { display:none; }
+    .hero { padding:24px 16px; } .main { padding:20px 12px 48px; }
+    .pf-table-wrap { overflow-x:auto; } .pf-table { min-width:680px; }
+    .pf-cards { grid-template-columns:1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <a class="logo" href="index.html"><span class="logo-mark">Diamond<span>Slates</span></span><span class="logo-sub">MLB Intelligence</span></a>
+  <nav>
+    <a href="index.html">Today's Slate</a>
+    <a href="#">Stadiums</a>
+    <a href="players.html">Players</a>
+    <a href="park-factors.html" class="active">Park Factors</a>
+    <a href="#">Pitch Arsenal</a>
+  </nav>
+  <div class="live-badge"><span class="live-dot"></span>Live Data</div>
+</header>
+
+<div class="hero">
+  <div class="hero-inner">
+    <div class="eyebrow">Wind · Altitude · Temperature Model</div>
+    <div class="hero-title">DAILY PARK FACTORS</div>
+    <div class="hero-date" id="hero-date">Loading today's conditions...</div>
+  </div>
+</div>
+
+<main class="main">
+
+  <div class="method-note">
+    <strong>How this works:</strong> Each game's park factor combines three live effects. Wind is compared against the stadium's true compass orientation — so a 15 mph wind "blowing out" at Wrigley boosts home runs, while the same wind blowing in suppresses them. Altitude adds carry (Coors gets the biggest boost). Temperature affects ball flight — every 10°F above 70° adds roughly 2% to fly-ball distance. Numbers are shown relative to MLB average.
+  </div>
+
+  <div class="controls-row">
+    <div class="view-toggle">
+      <button class="view-btn active" onclick="setView('table', this)">📊 Leaderboard</button>
+      <button class="view-btn" onclick="setView('cards', this)">🎴 Cards</button>
+    </div>
+    <div class="view-toggle">
+      <button class="view-btn active" onclick="filterEnv('all', this)">All Parks</button>
+      <button class="view-btn" onclick="filterEnv('hitting', this)">🔥 Hitting</button>
+      <button class="view-btn" onclick="filterEnv('pitching', this)">🧊 Pitching</button>
+    </div>
+  </div>
+
+  <!-- TABLE VIEW -->
+  <div id="table-view">
+    <div class="pf-table-wrap">
+      <table class="pf-table" id="pf-table">
+        <thead>
+          <tr>
+            <th onclick="sortBy('matchup')">Matchup</th>
+            <th onclick="sortBy('runs')" class="sorted">Run Factor ▾</th>
+            <th onclick="sortBy('hr')">HR Factor</th>
+            <th onclick="sortBy('wind')">Wind</th>
+            <th onclick="sortBy('temp')">Temp</th>
+            <th onclick="sortBy('env')">Environment</th>
+          </tr>
+        </thead>
+        <tbody id="pf-tbody">
+          <tr><td colspan="6"><div class="state-box"><div class="spinner"></div><div class="state-title">Calculating park factors...</div></div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- CARD VIEW -->
+  <div id="card-view" style="display:none">
+    <div class="pf-cards" id="pf-cards"></div>
+  </div>
+
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:#3CCF74"></div> Hitter-friendly (boosts offense)</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#E05555"></div> Pitcher-friendly (suppresses offense)</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#9B72DB"></div> Dome (climate controlled)</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#6B8CAE"></div> Neutral</div>
+  </div>
+</main>
+
+<script>
+// ── STADIUM DATA with TRUE COMPASS ORIENTATION ──
+// "cfBearing" = compass degrees from home plate toward center field.
+// This is the KEY to wind modeling: we compare wind direction to this bearing.
+const STADIUMS = {
+  108:{name:"Angel Stadium",city:"Anaheim, CA",lat:33.8003,lon:-117.8827,alt:43,dome:false,team:"LAA",cfBearing:48},
+  109:{name:"Chase Field",city:"Phoenix, AZ",lat:33.4455,lon:-112.0667,alt:331,dome:"retractable",team:"ARI",cfBearing:0},
+  110:{name:"Camden Yards",city:"Baltimore, MD",lat:39.2839,lon:-76.6218,alt:14,dome:false,team:"BAL",cfBearing:30},
+  111:{name:"Fenway Park",city:"Boston, MA",lat:42.3467,lon:-71.0972,alt:5,dome:false,team:"BOS",cfBearing:45},
+  112:{name:"Wrigley Field",city:"Chicago, IL",lat:41.9484,lon:-87.6553,alt:181,dome:false,team:"CHC",cfBearing:32},
+  145:{name:"Rate Field",city:"Chicago, IL",lat:41.8299,lon:-87.6338,alt:180,dome:false,team:"CWS",cfBearing:124},
+  113:{name:"Great American BP",city:"Cincinnati, OH",lat:39.0979,lon:-84.5082,alt:164,dome:false,team:"CIN",cfBearing:60},
+  114:{name:"Progressive Field",city:"Cleveland, OH",lat:41.4962,lon:-81.6852,alt:177,dome:false,team:"CLE",cfBearing:0},
+  115:{name:"Coors Field",city:"Denver, CO",lat:39.7559,lon:-104.9942,alt:5200,dome:false,team:"COL",cfBearing:0},
+  116:{name:"Comerica Park",city:"Detroit, MI",lat:42.3390,lon:-83.0485,alt:180,dome:false,team:"DET",cfBearing:25},
+  117:{name:"Daikin Park",city:"Houston, TX",lat:29.7573,lon:-95.3555,alt:12,dome:"retractable",team:"HOU",cfBearing:20},
+  118:{name:"Kauffman Stadium",city:"Kansas City, MO",lat:39.0517,lon:-94.4803,alt:249,dome:false,team:"KC",cfBearing:0},
+  119:{name:"Dodger Stadium",city:"Los Angeles, CA",lat:34.0739,lon:-118.2400,alt:168,dome:false,team:"LAD",cfBearing:25},
+  158:{name:"American Family Field",city:"Milwaukee, WI",lat:43.0280,lon:-87.9712,alt:185,dome:"retractable",team:"MIL",cfBearing:38},
+  142:{name:"Target Field",city:"Minneapolis, MN",lat:44.9817,lon:-93.2776,alt:262,dome:false,team:"MIN",cfBearing:67},
+  121:{name:"Citi Field",city:"New York, NY",lat:40.7571,lon:-73.8458,alt:4,dome:false,team:"NYM",cfBearing:24},
+  147:{name:"Yankee Stadium",city:"New York, NY",lat:40.8296,lon:-73.9262,alt:5,dome:false,team:"NYY",cfBearing:78},
+  133:{name:"Sutter Health Park",city:"Sacramento, CA",lat:38.5802,lon:-121.5008,alt:10,dome:false,team:"ATH",cfBearing:60},
+  143:{name:"Citizens Bank Park",city:"Philadelphia, PA",lat:39.9061,lon:-75.1665,alt:7,dome:false,team:"PHI",cfBearing:10},
+  134:{name:"PNC Park",city:"Pittsburgh, PA",lat:40.4468,lon:-80.0057,alt:222,dome:false,team:"PIT",cfBearing:118},
+  135:{name:"Petco Park",city:"San Diego, CA",lat:32.7076,lon:-117.1570,alt:6,dome:false,team:"SD",cfBearing:34},
+  137:{name:"Oracle Park",city:"San Francisco, CA",lat:37.7786,lon:-122.3893,alt:4,dome:false,team:"SF",cfBearing:88},
+  136:{name:"T-Mobile Park",city:"Seattle, WA",lat:47.5914,lon:-122.3325,alt:4,dome:"retractable",team:"SEA",cfBearing:60},
+  138:{name:"Busch Stadium",city:"St. Louis, MO",lat:38.6226,lon:-90.1928,alt:142,dome:false,team:"STL",cfBearing:60},
+  139:{name:"Tropicana Field",city:"St. Petersburg, FL",lat:27.7683,lon:-82.6534,alt:5,dome:"fixed",team:"TB",cfBearing:45},
+  140:{name:"Globe Life Field",city:"Arlington, TX",lat:32.7472,lon:-97.0834,alt:186,dome:"retractable",team:"TEX",cfBearing:0},
+  141:{name:"Rogers Centre",city:"Toronto, ON",lat:43.6414,lon:-79.3894,alt:76,dome:"retractable",team:"TOR",cfBearing:348},
+  120:{name:"Nationals Park",city:"Washington, DC",lat:38.8730,lon:-77.0074,alt:5,dome:false,team:"WSH",cfBearing:30},
+  144:{name:"Truist Park",city:"Atlanta, GA",lat:33.8908,lon:-84.4677,alt:279,dome:false,team:"ATL",cfBearing:25},
+  146:{name:"loanDepot Park",city:"Miami, FL",lat:25.7781,lon:-80.2196,alt:2,dome:"retractable",team:"MIA",cfBearing:40},
+};
+
+// Stadiums highly sensitive to wind (open, low walls) get amplified effect
+const WIND_SENSITIVITY = {
+  112:1.6, // Wrigley - most wind-receptive
+  137:0.5, // Oracle - unpredictable, deep gaps
+  158:0.3, // Milwaukee - tall walls (when open)
+  141:0.3, // Toronto - tall walls (when open)
+  113:1.2, // Great American - small park
+  111:1.1, // Fenway
+};
+
+// ── WIND MODEL ──
+// Compares wind direction to stadium center-field bearing.
+// Returns a multiplier: positive = blowing out (helps HR), negative = blowing in.
+function windEffect(windFromDir, windSpeed, stadium, venueId) {
+  // windFromDir = direction wind is COMING FROM (meteorological standard)
+  // Convert to direction wind is blowing TO:
+  const windToDir = (windFromDir + 180) % 360;
+
+  // Angle between wind-blowing-to direction and center field bearing
+  let diff = Math.abs(windToDir - stadium.cfBearing);
+  if (diff > 180) diff = 360 - diff;
+
+  // cos(diff): 1 = straight out to CF, -1 = straight in from CF, 0 = crosswind
+  const alignment = Math.cos(diff * Math.PI / 180);
+
+  const sensitivity = WIND_SENSITIVITY[venueId] || 1.0;
+
+  // Effective wind contribution to HR factor (%)
+  // Only winds above ~4mph matter much
+  const effectiveSpeed = Math.max(0, windSpeed - 3);
+  return alignment * effectiveSpeed * 0.55 * sensitivity;
+}
+
+// ── ALTITUDE MODEL ──
+// alt values below are stored in FEET above sea level.
+function altitudeEffect(altFeet) {
+  if (altFeet <= 600) return 0;
+  // ~2.2% HR boost per 1000ft above 600ft baseline, capped
+  return Math.min((altFeet - 600) / 1000 * 2.2, 18);
+}
+
+// ── TEMPERATURE MODEL ──
+function tempEffect(tempF) {
+  // Every 10°F above 70 adds ~2% fly ball distance → HR
+  return ((tempF - 70) / 10) * 2.2;
+}
+
+// ── COMBINED PARK FACTOR ──
+function calcParkFactor(weather, stadium, venueId) {
+  if (stadium.dome === 'fixed') {
+    return { hr: 0, runs: 0, env: 'dome', windOut: 0, components: {} };
+  }
+
+  const windFrom = (weather.wind_direction_10m ?? weather.winddirection_10m) ?? 180;
+  const windSpd  = (weather.wind_speed_10m ?? weather.windspeed_10m) ?? 0;
+  const tempF    = weather.temperature_2m ?? 70;
+
+  const wind = windEffect(windFrom, windSpd, stadium, venueId);
+  const alt  = altitudeEffect(stadium.alt);
+  const temp = tempEffect(tempF);
+
+  // Retractable domes: wind effect dampened (roof often closed in bad weather)
+  const windFinal = stadium.dome === 'retractable' ? wind * 0.4 : wind;
+
+  const hrFactor  = +(windFinal + alt + temp).toFixed(1);
+  const runFactor = +(hrFactor * 0.68).toFixed(1);
+
+  let env = 'neutral';
+  if (hrFactor > 6)  env = 'hitting';
+  if (hrFactor < -4) env = 'pitching';
+
+  return {
+    hr: hrFactor,
+    runs: runFactor,
+    env,
+    windOut: +windFinal.toFixed(1),
+    components: { wind: +windFinal.toFixed(1), alt: +alt.toFixed(1), temp: +temp.toFixed(1) }
+  };
+}
+
+// ── HELPERS ──
+function degToCardinal(deg){const d=['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];return d[Math.round(deg/22.5)%16];}
+function windArrow(deg){return `<span class="wind-arrow-sm" style="transform:rotate(${(deg+180)%360}deg)">↑</span>`;}
+function fmtPct(v){return (v>0?'+':'')+v+'%';}
+function pfClass(v){return v>3?'pf-pos':v<-3?'pf-neg':'pf-neu';}
+
+// ── DATA FETCH ──
+async function fetchWeather(lat,lon){
+  try{
+    const url=`/api/proxy?type=weather&lat=${lat}&lon=${lon}`;
+    const r=await fetch(url);const d=await r.json();return d.current;
+  }catch{return null;}
+}
+async function fetchGames(){
+  const today=new Date().toISOString().split('T')[0];
+  const url=`https://statsapi.mlb.com/api/v1/schedule?sportId=1&date=${today}&hydrate=team,venue`;
+  const r=await fetch(url);const d=await r.json();return d.dates?.[0]?.games||[];
+}
+
+// ── STATE ──
+let gameData = [];
+let currentSort = { key:'runs', dir:'desc' };
+let currentFilter = 'all';
+let currentView = 'table';
+
+// ── INIT ──
+async function init(){
+  const today=new Date();
+  document.getElementById('hero-date').textContent=today.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+
+  let games=[];
+  try{ games=await fetchGames(); }catch(e){ showError(); return; }
+
+  if(!games.length){ showEmpty(); return; }
+
+  // Fetch weather per venue
+  const venueWeather={};
+  await Promise.all(games.map(async g=>{
+    const vId=g.venue.id; const s=STADIUMS[vId];
+    if(s && !venueWeather[vId]) venueWeather[vId]=await fetchWeather(s.lat,s.lon);
+  }));
+
+  // Build game data with park factors
+  gameData = games.map(g=>{
+    const vId=g.venue.id;
+    const stadium=STADIUMS[vId]||{name:g.venue.name,dome:false,alt:100,cfBearing:0,team:'?'};
+    const weather=venueWeather[vId]||{};
+    const pf=calcParkFactor(weather,stadium,vId);
+    const away=g.teams.away.team.abbreviation||'?';
+    const home=g.teams.home.team.abbreviation||'?';
+    return {
+      vId, stadium, weather, pf,
+      matchup:`${away} @ ${home}`,
+      away, home,
+      temp: weather.temperature_2m!=null?Math.round(weather.temperature_2m):null,
+      windSpd: (weather.wind_speed_10m ?? weather.windspeed_10m)!=null?Math.round(weather.wind_speed_10m ?? weather.windspeed_10m):null,
+      windDir: (weather.wind_direction_10m ?? weather.winddirection_10m)!=null?Math.round(weather.wind_direction_10m ?? weather.winddirection_10m):null,
+    };
+  });
+
+  render();
+}
+
+// ── RENDER ──
+function render(){
+  let data=[...gameData];
+
+  // Filter
+  if(currentFilter!=='all') data=data.filter(d=>d.pf.env===currentFilter);
+
+  // Sort
+  data.sort((a,b)=>{
+    let av,bv;
+    switch(currentSort.key){
+      case 'matchup': av=a.matchup; bv=b.matchup; break;
+      case 'hr': av=a.pf.hr; bv=b.pf.hr; break;
+      case 'wind': av=a.pf.windOut; bv=b.pf.windOut; break;
+      case 'temp': av=a.temp||0; bv=b.temp||0; break;
+      case 'env': av=a.pf.env; bv=b.pf.env; break;
+      default: av=a.pf.runs; bv=b.pf.runs;
+    }
+    if(typeof av==='string') return currentSort.dir==='desc'?bv.localeCompare(av):av.localeCompare(bv);
+    return currentSort.dir==='desc'?bv-av:av-bv;
+  });
+
+  if(currentView==='table') renderTable(data);
+  else renderCards(data);
+}
+
+function renderTable(data){
+  const tb=document.getElementById('pf-tbody');
+  if(!data.length){ tb.innerHTML=`<tr><td colspan="6"><div class="state-box"><div class="state-icon">🔍</div><div class="state-title">No games match this filter</div></div></td></tr>`; return; }
+
+  tb.innerHTML=data.map(d=>{
+    const isDome=d.stadium.dome==='fixed';
+    const envCls=`env-${d.pf.env}`;
+    const envTxt=d.pf.env==='dome'?'Dome':d.pf.env==='hitting'?"Hitter's":d.pf.env==='pitching'?"Pitcher's":'Neutral';
+    const windHtml=isDome?'<span class="wind-txt">—</span>':
+      d.windSpd!=null?`<div class="wind-cell">${windArrow(d.windDir)}<span class="wind-txt">${d.windSpd} ${degToCardinal(d.windDir)}</span></div>`:'<span class="wind-txt">—</span>';
+    return `<tr onclick="window.location.href='index.html'">
+      <td><div class="matchup-cell"><span class="matchup-teams">${d.matchup}</span><span class="matchup-venue">${d.stadium.name}</span></div></td>
+      <td><span class="pf-val ${pfClass(d.pf.runs)}">${isDome?'—':fmtPct(d.pf.runs)}</span></td>
+      <td><span class="pf-val ${pfClass(d.pf.hr)}">${isDome?'—':fmtPct(d.pf.hr)}</span></td>
+      <td>${windHtml}</td>
+      <td><span class="temp-cell">${isDome?'72°':d.temp!=null?d.temp+'°':'—'}</span></td>
+      <td><span class="env-tag ${envCls}">${envTxt}</span></td>
+    </tr>`;
+  }).join('');
+
+  // Update sort indicators
+  document.querySelectorAll('.pf-table th').forEach(th=>th.classList.remove('sorted'));
+}
+
+function renderCards(data){
+  const wrap=document.getElementById('pf-cards');
+  if(!data.length){ wrap.innerHTML=`<div class="state-box" style="grid-column:1/-1"><div class="state-icon">🔍</div><div class="state-title">No games match this filter</div></div>`; return; }
+
+  wrap.innerHTML=data.map(d=>{
+    const isDome=d.stadium.dome==='fixed';
+    const c=d.pf.components;
+    const envTxt=d.pf.env==='dome'?'Dome':d.pf.env==='hitting'?"Hitter's Park":d.pf.env==='pitching'?"Pitcher's Park":'Neutral';
+    const envCls=`env-${d.pf.env}`;
+
+    // Gauge: center is 0, range -20 to +20
+    const gaugePct=Math.max(0,Math.min(100,50+d.pf.hr*2.5));
+    const fillColor=d.pf.hr>3?'#3CCF74':d.pf.hr<-3?'#E05555':'#6B8CAE';
+    const fillLeft=d.pf.hr>=0?50:gaugePct;
+    const fillWidth=Math.abs(gaugePct-50);
+
+    let banner='';
+    if(isDome) banner='🏟 Fixed dome — no weather impact';
+    else if(d.pf.env==='hitting') banner=`🔥 ${c.wind>2?'Wind blowing out':'Conditions'} carrying the ball — ${fmtPct(d.pf.hr)} HR`;
+    else if(d.pf.env==='pitching') banner=`🧊 ${c.wind<-2?'Wind blowing in':'Cool air'} suppressing offense`;
+    else banner='⚖️ Near league-average run environment';
+
+    return `<div class="pf-card" onclick="window.location.href='index.html'">
+      <div class="pf-card-top">
+        <div><div class="pf-card-matchup">${d.matchup}</div><div class="pf-card-venue">${d.stadium.name}</div></div>
+        <span class="env-tag ${envCls}">${envTxt}</span>
+      </div>
+      <div class="pf-gauge">
+        <div class="pf-gauge-bar">
+          <div class="pf-gauge-center"></div>
+          <div class="pf-gauge-fill" style="left:${fillLeft}%;width:${fillWidth}%;background:${fillColor}"></div>
+        </div>
+        <div class="pf-gauge-labels"><span>PITCHER</span><span>NEUTRAL</span><span>HITTER</span></div>
+      </div>
+      <div class="pf-card-stats">
+        <div class="pf-card-stat"><div class="pfc-val ${pfClass(d.pf.runs)}">${isDome?'—':fmtPct(d.pf.runs)}</div><div class="pfc-lbl">Runs</div></div>
+        <div class="pf-card-stat"><div class="pfc-val ${pfClass(d.pf.hr)}">${isDome?'—':fmtPct(d.pf.hr)}</div><div class="pfc-lbl">HR</div></div>
+        <div class="pf-card-stat"><div class="pfc-val" style="color:${(c.wind||0)>0?'#3CCF74':(c.wind||0)<0?'#E05555':'var(--text-muted)'}">${isDome?'—':(c.wind>0?'+':'')+(c.wind||0)}</div><div class="pfc-lbl">Wind</div></div>
+        <div class="pf-card-stat"><div class="pfc-val pf-neu">${isDome?'72°':d.temp!=null?d.temp+'°':'—'}</div><div class="pfc-lbl">Temp</div></div>
+      </div>
+      <div class="pf-card-banner">${banner}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── CONTROLS ──
+function sortBy(key){
+  if(currentSort.key===key) currentSort.dir=currentSort.dir==='desc'?'asc':'desc';
+  else { currentSort.key=key; currentSort.dir='desc'; }
+  render();
+}
+function setView(view,btn){
+  currentView=view;
+  document.querySelectorAll('.view-toggle')[0].querySelectorAll('.view-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('table-view').style.display=view==='table'?'block':'none';
+  document.getElementById('card-view').style.display=view==='cards'?'block':'none';
+  render();
+}
+function filterEnv(env,btn){
+  currentFilter=env;
+  document.querySelectorAll('.view-toggle')[1].querySelectorAll('.view-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  render();
+}
+
+function showError(){ document.getElementById('pf-tbody').innerHTML=`<tr><td colspan="6"><div class="state-box"><div class="state-icon">⚾</div><div class="state-title">Couldn't load schedule</div><div class="state-sub">Check your connection and refresh.</div></div></td></tr>`; }
+function showEmpty(){ document.getElementById('pf-tbody').innerHTML=`<tr><td colspan="6"><div class="state-box"><div class="state-icon">🌙</div><div class="state-title">No games today</div><div class="state-sub">Check back on the next game day.</div></div></td></tr>`; }
+
+init();
+setInterval(init, 5*60*1000);
+</script>
+</body>
+</html>
