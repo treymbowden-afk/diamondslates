@@ -1,0 +1,1124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DiamondSlates — MLB Game Day Intelligence</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --navy:       #0A1628;
+    --navy-card:  #111E33;
+    --navy-deep:  #0D1A2E;
+    --navy-hover: #162340;
+    --gold:       #C8A84B;
+    --gold-dim:   #8A6F2E;
+    --text:       #E8EDF2;
+    --text-muted: #6B8CAE;
+    --text-dim:   #3D5470;
+    --green:      #3CCF74;
+    --red:        #E05555;
+    --border:     rgba(200,168,75,0.15);
+    --border-dim: rgba(107,140,174,0.12);
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--navy);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── HEADER ── */
+  header {
+    background: var(--navy-deep);
+    border-bottom: 1px solid var(--border);
+    padding: 0 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 64px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    backdrop-filter: blur(8px);
+  }
+
+  .logo {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+  }
+
+  .logo-mark {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px;
+    letter-spacing: 2px;
+    color: var(--text);
+    line-height: 1;
+  }
+
+  .logo-mark span {
+    color: var(--gold);
+  }
+
+  .logo-sub {
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  nav {
+    display: flex;
+    gap: 28px;
+  }
+
+  nav a {
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+
+  nav a:hover, nav a.active { color: var(--gold); }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .live-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    color: var(--green);
+    text-transform: uppercase;
+  }
+
+  .live-dot {
+    width: 6px;
+    height: 6px;
+    background: var(--green);
+    border-radius: 50%;
+    animation: pulse 1.8s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.8); }
+  }
+
+  /* ── HERO BAND ── */
+  .hero-band {
+    background: linear-gradient(135deg, #0D1A2E 0%, #111E33 50%, #0A1628 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 40px 32px 32px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero-band::before {
+    content: '';
+    position: absolute;
+    top: -60px; right: -60px;
+    width: 300px; height: 300px;
+    background: radial-gradient(circle, rgba(200,168,75,0.06) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .hero-content {
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .today-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 8px;
+  }
+
+  .hero-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(36px, 5vw, 60px);
+    letter-spacing: 3px;
+    line-height: 1;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+
+  .hero-date {
+    font-size: 13px;
+    color: var(--text-muted);
+    font-weight: 400;
+    margin-bottom: 24px;
+  }
+
+  .summary-strip {
+    display: flex;
+    gap: 32px;
+    flex-wrap: wrap;
+  }
+
+  .summary-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .summary-stat .val {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--text);
+    line-height: 1;
+  }
+
+  .summary-stat .lbl {
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  .divider-v {
+    width: 1px;
+    background: var(--border-dim);
+    align-self: stretch;
+  }
+
+  /* ── MAIN LAYOUT ── */
+  .main {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 32px 24px 64px;
+  }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+
+  .section-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 18px;
+    letter-spacing: 2px;
+    color: var(--text-muted);
+  }
+
+  .filter-row {
+    display: flex;
+    gap: 8px;
+  }
+
+  .filter-btn {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    background: var(--navy-card);
+    border: 1px solid var(--border-dim);
+    border-radius: 4px;
+    padding: 5px 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .filter-btn:hover, .filter-btn.active {
+    color: var(--gold);
+    border-color: var(--gold);
+    background: rgba(200,168,75,0.05);
+  }
+
+  /* ── GAME CARDS GRID ── */
+  .games-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 16px;
+  }
+
+  /* ── GAME CARD ── */
+  .game-card {
+    background: var(--navy-card);
+    border: 1px solid var(--border-dim);
+    border-radius: 10px;
+    overflow: hidden;
+    transition: border-color 0.2s, transform 0.2s;
+    cursor: pointer;
+  }
+
+  .game-card:hover {
+    border-color: rgba(200,168,75,0.35);
+    transform: translateY(-2px);
+  }
+
+  /* Weather band at top of card */
+  .weather-band {
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .weather-band::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, rgba(0,0,0,0.3) 0%, transparent 100%);
+    pointer-events: none;
+  }
+
+  .weather-band.clear    { background: linear-gradient(135deg, #0D2640 0%, #1A3A5C 100%); }
+  .weather-band.cloudy   { background: linear-gradient(135deg, #1A1F2E 0%, #252C3D 100%); }
+  .weather-band.rain     { background: linear-gradient(135deg, #0D1E30 0%, #1A2840 100%); }
+  .weather-band.dome     { background: linear-gradient(135deg, #1A1020 0%, #2A1840 100%); }
+  .weather-band.partly   { background: linear-gradient(135deg, #0D2030 0%, #1E3248 100%); }
+
+  .weather-left {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .stadium-name {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: rgba(232,237,242,0.7);
+  }
+
+  .weather-main {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .weather-icon {
+    font-size: 20px;
+    line-height: 1;
+  }
+
+  .weather-temp {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 30px;
+    letter-spacing: 1px;
+    color: var(--text);
+    line-height: 1;
+  }
+
+  .weather-desc {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-weight: 400;
+  }
+
+  .weather-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .wind-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--text);
+  }
+
+  .wind-arrow {
+    display: inline-block;
+    font-size: 14px;
+    transition: transform 0.5s ease;
+  }
+
+  .wind-speed-val {
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .wind-speed-unit {
+    color: var(--text-muted);
+    font-size: 10px;
+  }
+
+  .weather-pills {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  .w-pill {
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    padding: 2px 6px;
+    border-radius: 3px;
+    background: rgba(255,255,255,0.08);
+    color: var(--text-muted);
+  }
+
+  .w-pill.hitting  { background: rgba(60,207,116,0.15); color: #3CCF74; }
+  .w-pill.pitching { background: rgba(224,85,85,0.15);  color: #E05555; }
+  .w-pill.neutral  { background: rgba(107,140,174,0.15); color: var(--text-muted); }
+  .w-pill.dome     { background: rgba(147,112,219,0.15); color: #9B72DB; }
+
+  /* Park factor bar */
+  .park-factor-bar {
+    height: 3px;
+    background: var(--border-dim);
+    position: relative;
+  }
+
+  .park-factor-fill {
+    height: 100%;
+    transition: width 0.8s ease;
+  }
+
+  .pf-hitting  { background: linear-gradient(90deg, #3CCF74, #2AA858); }
+  .pf-pitching { background: linear-gradient(90deg, #E05555, #B83D3D); }
+  .pf-neutral  { background: var(--border-dim); }
+
+  /* Game info section */
+  .game-info {
+    padding: 14px 16px 16px;
+  }
+
+  .game-time-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+
+  .game-time {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-muted);
+    letter-spacing: 0.5px;
+  }
+
+  .game-status {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .game-status.live   { color: var(--green); }
+  .game-status.final  { color: var(--text-dim); }
+  .game-status.sched  { color: var(--text-muted); }
+
+  /* Teams matchup */
+  .teams-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .team {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .team.away { align-items: flex-start; }
+  .team.home { align-items: flex-end; }
+
+  .team-abbr {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px;
+    letter-spacing: 2px;
+    line-height: 1;
+    color: var(--text);
+  }
+
+  .team-record {
+    font-size: 10px;
+    color: var(--text-dim);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .team-pitcher {
+    font-size: 10px;
+    color: var(--text-muted);
+    font-weight: 400;
+  }
+
+  .vs-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    min-width: 40px;
+  }
+
+  .vs-text {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 14px;
+    letter-spacing: 1px;
+    color: var(--text-dim);
+  }
+
+  .score-display {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text);
+    letter-spacing: 2px;
+  }
+
+  /* Park factor row at bottom */
+  .pf-row {
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border-dim);
+    display: flex;
+    gap: 12px;
+  }
+
+  .pf-stat {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+  }
+
+  .pf-val {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  .pf-val.pos { color: var(--green); }
+  .pf-val.neg { color: var(--red); }
+  .pf-val.neu { color: var(--text-muted); }
+
+  .pf-lbl {
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+
+  /* Loading state */
+  .loading-overlay {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 16px;
+    padding: 60px;
+    grid-column: 1 / -1;
+  }
+
+  .loading-overlay.show { display: flex; }
+
+  .spinner {
+    width: 36px; height: 36px;
+    border: 2px solid var(--border-dim);
+    border-top-color: var(--gold);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .loading-text {
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  /* Error / empty state */
+  .api-note {
+    background: rgba(200,168,75,0.06);
+    border: 1px solid rgba(200,168,75,0.2);
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin-bottom: 24px;
+    font-size: 12px;
+    color: var(--text-muted);
+    line-height: 1.6;
+  }
+
+  .api-note strong { color: var(--gold); }
+
+  /* Legend */
+  .legend {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-top: 32px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border-dim);
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+
+  .legend-dot {
+    width: 8px; height: 8px;
+    border-radius: 2px;
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    header { padding: 0 16px; }
+    nav { display: none; }
+    .hero-band { padding: 24px 16px; }
+    .main { padding: 20px 12px 48px; }
+    .games-grid { grid-template-columns: 1fr; }
+  }
+
+  /* Tooltip */
+  [data-tip] { position: relative; }
+  [data-tip]::after {
+    content: attr(data-tip);
+    position: absolute;
+    bottom: 100%; left: 50%;
+    transform: translateX(-50%) translateY(-4px);
+    background: #1C2E4A;
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-size: 11px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s;
+    z-index: 10;
+  }
+  [data-tip]:hover::after { opacity: 1; }
+
+  /* Park factor context banner */
+  .pf-banner {
+    padding: 6px 16px;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+    background: rgba(0,0,0,0.15);
+    border-top: 1px solid var(--border-dim);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .pf-banner .icon { font-size: 12px; }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="logo">
+    <span class="logo-mark">Diamond<span>Slates</span></span>
+    <span class="logo-sub">MLB Intelligence</span>
+  </div>
+  <nav>
+    <a href="index.html" class="active">Today's Slate</a>
+    <a href="#">Stadiums</a>
+    <a href="players.html">Players</a>
+    <a href="park-factors.html">Park Factors</a>
+    <a href="#">Pitch Arsenal</a>
+  </nav>
+  <div class="header-right">
+    <div class="live-badge">
+      <span class="live-dot"></span>
+      Live Data
+    </div>
+  </div>
+</header>
+
+<!-- HERO BAND -->
+<div class="hero-band">
+  <div class="hero-content">
+    <div class="today-label">Game Day Intelligence</div>
+    <div class="hero-title">TODAY'S SLATE</div>
+    <div class="hero-date" id="hero-date">Loading schedule...</div>
+    <div class="summary-strip" id="summary-strip">
+      <div class="summary-stat">
+        <span class="val" id="stat-games">—</span>
+        <span class="lbl">Games Today</span>
+      </div>
+      <div class="divider-v"></div>
+      <div class="summary-stat">
+        <span class="val" id="stat-hitting">—</span>
+        <span class="lbl">Hitter-Friendly</span>
+      </div>
+      <div class="divider-v"></div>
+      <div class="summary-stat">
+        <span class="val" id="stat-dome">—</span>
+        <span class="lbl">Dome Games</span>
+      </div>
+      <div class="divider-v"></div>
+      <div class="summary-stat">
+        <span class="val" id="stat-avg-temp">—°</span>
+        <span class="lbl">Avg Temp</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<main class="main">
+
+  <div class="api-note">
+    <strong>Live Data:</strong> Game schedules pull from the free MLB Stats API. Weather loads from Open-Meteo using each stadium's GPS coordinates. Park factors shown are model estimates based on wind direction, temperature, and altitude. Data refreshes automatically every 5 minutes.
+  </div>
+
+  <div class="section-header">
+    <span class="section-title">TODAY'S GAMES</span>
+    <div class="filter-row">
+      <button class="filter-btn active" onclick="filterGames('all', this)">All</button>
+      <button class="filter-btn" onclick="filterGames('hitting', this)">🔥 Hitting</button>
+      <button class="filter-btn" onclick="filterGames('pitching', this)">🧊 Pitching</button>
+      <button class="filter-btn" onclick="filterGames('dome', this)">🏟 Dome</button>
+    </div>
+  </div>
+
+  <div class="games-grid" id="games-grid">
+    <div class="loading-overlay show" id="loading">
+      <div class="spinner"></div>
+      <div class="loading-text">Fetching Today's Slate</div>
+    </div>
+  </div>
+
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:#3CCF74"></div> Hitter-friendly conditions</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#E05555"></div> Pitcher-friendly conditions</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#9B72DB"></div> Retractable/Fixed dome</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#6B8CAE"></div> Neutral environment</div>
+    <span style="font-size:11px; color:var(--text-dim); margin-left:auto;">Park factors are vs. MLB average. Weather refreshes every 5 min.</span>
+  </div>
+</main>
+
+<script>
+// ── STADIUM DATA (all 30 MLB parks with GPS coords) ──
+const STADIUMS = {
+  108: { name: "Angel Stadium",        city: "Anaheim, CA",    lat: 33.8003, lon: -117.8827, alt: 43,   dome: false, team: "LAA" },
+  109: { name: "Chase Field",          city: "Phoenix, AZ",    lat: 33.4455, lon: -112.0667, alt: 331,  dome: "retractable", team: "ARI" },
+  110: { name: "Camden Yards",         city: "Baltimore, MD",  lat: 39.2839, lon: -76.6218,  alt: 14,   dome: false, team: "BAL" },
+  111: { name: "Fenway Park",          city: "Boston, MA",     lat: 42.3467, lon: -71.0972,  alt: 5,    dome: false, team: "BOS" },
+  112: { name: "Wrigley Field",        city: "Chicago, IL",    lat: 41.9484, lon: -87.6553,  alt: 181,  dome: false, team: "CHC" },
+  145: { name: "Guaranteed Rate Field",city: "Chicago, IL",    lat: 41.8299, lon: -87.6338,  alt: 180,  dome: false, team: "CWS" },
+  113: { name: "Great American BP",    city: "Cincinnati, OH", lat: 39.0979, lon: -84.5082,  alt: 164,  dome: false, team: "CIN" },
+  114: { name: "Progressive Field",    city: "Cleveland, OH",  lat: 41.4962, lon: -81.6852,  alt: 177,  dome: false, team: "CLE" },
+  115: { name: "Coors Field",          city: "Denver, CO",     lat: 39.7559, lon: -104.9942, alt: 1580, dome: false, team: "COL" },
+  116: { name: "Comerica Park",        city: "Detroit, MI",    lat: 42.3390, lon: -83.0485,  alt: 180,  dome: false, team: "DET" },
+  117: { name: "Minute Maid Park",     city: "Houston, TX",    lat: 29.7573, lon: -95.3555,  alt: 12,   dome: "retractable", team: "HOU" },
+  118: { name: "Kauffman Stadium",     city: "Kansas City, MO",lat: 39.0517, lon: -94.4803,  alt: 249,  dome: false, team: "KC"  },
+  119: { name: "Dodger Stadium",       city: "Los Angeles, CA",lat: 34.0739, lon: -118.2400, alt: 168,  dome: false, team: "LAD" },
+  158: { name: "American Family Field",city: "Milwaukee, WI",  lat: 43.0280, lon: -87.9712,  alt: 185,  dome: "retractable", team: "MIL" },
+  142: { name: "Target Field",         city: "Minneapolis, MN",lat: 44.9817, lon: -93.2776,  alt: 262,  dome: false, team: "MIN" },
+  121: { name: "Citi Field",           city: "New York, NY",   lat: 40.7571, lon: -73.8458,  alt: 4,    dome: false, team: "NYM" },
+  147: { name: "Yankee Stadium",       city: "New York, NY",   lat: 40.8296, lon: -73.9262,  alt: 5,    dome: false, team: "NYY" },
+  133: { name: "Sutter Health Park",   city: "Sacramento, CA", lat: 38.5802, lon: -121.5008, alt: 10,   dome: false, team: "OAK" },
+  143: { name: "Citizens Bank Park",   city: "Philadelphia, PA",lat:39.9061, lon: -75.1665,  alt: 7,    dome: false, team: "PHI" },
+  134: { name: "PNC Park",             city: "Pittsburgh, PA", lat: 40.4468, lon: -80.0057,  alt: 222,  dome: false, team: "PIT" },
+  135: { name: "Petco Park",           city: "San Diego, CA",  lat: 32.7076, lon: -117.1570, alt: 6,    dome: false, team: "SD"  },
+  137: { name: "Oracle Park",          city: "San Francisco, CA",lat:37.7786,lon: -122.3893, alt: 4,    dome: false, team: "SF"  },
+  136: { name: "T-Mobile Park",        city: "Seattle, WA",    lat: 47.5914, lon: -122.3325, alt: 4,    dome: "retractable", team: "SEA" },
+  138: { name: "Busch Stadium",        city: "St. Louis, MO",  lat: 38.6226, lon: -90.1928,  alt: 142,  dome: false, team: "STL" },
+  139: { name: "Tropicana Field",      city: "St. Petersburg, FL",lat:27.7683,lon:-82.6534,  alt: 5,    dome: "fixed", team: "TB" },
+  140: { name: "Globe Life Field",     city: "Arlington, TX",  lat: 32.7472, lon: -97.0834,  alt: 186,  dome: "retractable", team: "TEX" },
+  141: { name: "Rogers Centre",        city: "Toronto, ON",    lat: 43.6414, lon: -79.3894,  alt: 76,   dome: "retractable", team: "TOR" },
+  120: { name: "Nationals Park",       city: "Washington, DC", lat: 38.8730, lon: -77.0074,  alt: 5,    dome: false, team: "WSH" },
+  144: { name: "Truist Park",          city: "Atlanta, GA",    lat: 33.8908, lon: -84.4677,  alt: 279,  dome: false, team: "ATL" },
+  146: { name: "loanDepot Park",       city: "Miami, FL",      lat: 25.7781, lon: -80.2196,  alt: 2,    dome: "retractable", team: "MIA" },
+};
+
+// Team colors for flair
+const TEAM_COLORS = {
+  LAA:'#BA0021', ARI:'#A71930', BAL:'#DF4601', BOS:'#BD3039',
+  CHC:'#0E3386', CWS:'#27251F', CIN:'#C6011F', CLE:'#0C2340',
+  COL:'#333366', DET:'#0C2340', HOU:'#002D62', KC: '#004687',
+  LAD:'#005A9C', MIL:'#12284B', MIN:'#002B5C', NYM:'#002D72',
+  NYY:'#003087', OAK:'#003831', PHI:'#E81828', PIT:'#FDB827',
+  SD: '#2F241D', SF: '#FD5A1E', SEA:'#0C2C56', STL:'#C41E3A',
+  TB: '#092C5C', TEX:'#003278', TOR:'#134A8E', WSH:'#AB0003',
+  ATL:'#CE1141', MIA:'#00A3E0',
+};
+
+// Wind direction to arrow rotation
+function windDirToArrow(deg) {
+  return `<span class="wind-arrow" style="transform:rotate(${deg}deg)">↑</span>`;
+}
+
+// Wind direction label
+function degToCardinal(deg) {
+  const dirs = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
+  return dirs[Math.round(deg / 22.5) % 16];
+}
+
+// Park factor calc (simplified model)
+function calcParkFactor(weather, stadium) {
+  if (stadium.dome === 'fixed') return { runs: 0, hr: 0, env: 'dome' };
+
+  const wind     = weather.windspeed;
+  const windDir  = weather.winddirection;
+  const temp     = weather.temperature;
+  const alt      = stadium.alt;
+
+  // Altitude bonus (Coors effect)
+  const altBonus = Math.min((alt - 200) / 100 * 0.8, 12);
+
+  // Temp effect: every 10°F above 70 → +2% HR carry
+  const tempBonus = ((temp - 70) / 10) * 2;
+
+  // Wind: we simplify — positive = blowing out, negative = in
+  // Real model would use stadium orientation
+  const windFactor = (wind > 5) ? (wind - 5) * 0.4 : 0;
+  const windSign   = (windDir >= 45 && windDir <= 180) ? 1 : -1; // crude N/S split
+
+  const hrFactor  = +(altBonus + tempBonus + (windFactor * windSign)).toFixed(1);
+  const runFactor = +(hrFactor * 0.7).toFixed(1);
+
+  let env = 'neutral';
+  if (hrFactor > 5)  env = 'hitting';
+  if (hrFactor < -3) env = 'pitching';
+
+  return { runs: runFactor, hr: hrFactor, env };
+}
+
+// Weather condition to display
+function weatherDisplay(code, isDome) {
+  if (isDome) return { icon: '🏟', desc: 'Controlled Climate', cls: 'dome' };
+  // WMO weather codes
+  if (code === 0)              return { icon: '☀️',  desc: 'Clear',        cls: 'clear'   };
+  if (code <= 2)               return { icon: '🌤',  desc: 'Partly Cloudy',cls: 'partly'  };
+  if (code <= 3)               return { icon: '☁️',  desc: 'Overcast',     cls: 'cloudy'  };
+  if (code <= 55)              return { icon: '🌦',  desc: 'Light Drizzle',cls: 'rain'    };
+  if (code <= 67)              return { icon: '🌧',  desc: 'Rain',         cls: 'rain'    };
+  if (code <= 77)              return { icon: '🌨',  desc: 'Snow Showers', cls: 'cloudy'  };
+  if (code <= 82)              return { icon: '🌧',  desc: 'Showers',      cls: 'rain'    };
+  if (code >= 95)              return { icon: '⛈',  desc: 'Thunderstorm', cls: 'rain'    };
+  return { icon: '🌡', desc: 'Mixed', cls: 'partly' };
+}
+
+// Format time
+function fmtTime(dtStr) {
+  const d = new Date(dtStr);
+  return d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZoneName: 'short' });
+}
+
+// Build park factor context banner text
+function pfBannerText(pf, stadium) {
+  if (stadium.dome === 'fixed') return '🏟 Fixed dome — climate controlled, no weather impact';
+  if (pf.hr > 8)   return `🔥 Strong hitter conditions — +${pf.hr}% HR vs. avg. Altitude & heat carrying the ball`;
+  if (pf.hr > 3)   return `📈 Slightly hitter-friendly — ${pf.hr > 0 ? '+' : ''}${pf.hr}% HR vs. avg`;
+  if (pf.hr < -3)  return `🧊 Pitcher-friendly — ${pf.hr}% HR vs. avg. Expect fewer runs`;
+  return '⚖️ Neutral environment — near MLB average run-scoring';
+}
+
+// Render a game card
+function renderCard(game, weather, pf) {
+  const away    = game.teams.away;
+  const home    = game.teams.home;
+  const venueId = game.venue.id;
+  const stadium = STADIUMS[venueId] || { name: game.venue.name, city: '', dome: false, alt: 100 };
+  const isDome  = stadium.dome === 'fixed';
+
+  const w     = weather || {};
+  const wDisp = weatherDisplay(w.weathercode || 0, isDome);
+  const tempF = w.temperature_2m != null ? Math.round(w.temperature_2m * 9/5 + 32) : null;
+  const wind  = w.windspeed_10m != null ? Math.round(w.windspeed_10m * 0.621371) : null;
+  const windD = w.winddirection_10m != null ? Math.round(w.winddirection_10m) : null;
+
+  const envCls = pf ? pf.env : 'neutral';
+  const pfHR   = pf ? pf.hr : 0;
+  const pfRuns = pf ? pf.runs : 0;
+
+  const awayAbbr = away.team.abbreviation || away.team.teamName.slice(0,3).toUpperCase();
+  const homeAbbr = home.team.abbreviation || home.team.teamName.slice(0,3).toUpperCase();
+
+  const awayRec = away.leagueRecord ? `${away.leagueRecord.wins}-${away.leagueRecord.losses}` : '';
+  const homeRec = home.leagueRecord ? `${home.leagueRecord.wins}-${home.leagueRecord.losses}` : '';
+
+  const awayProbName = away.probablePitcher ? away.probablePitcher.fullName : 'TBD';
+  const homeProbName = home.probablePitcher ? home.probablePitcher.fullName : 'TBD';
+  const awayProbId   = away.probablePitcher ? away.probablePitcher.id : null;
+  const homeProbId   = home.probablePitcher ? home.probablePitcher.id : null;
+  const awayProb = awayProbId
+    ? `<a href="players.html?id=${awayProbId}&name=${encodeURIComponent(awayProbName)}&type=pitcher&team=${awayAbbr}" style="color:var(--text-muted);text-decoration:none;" onmouseover="this.style.color='var(--gold)'" onmouseout="this.style.color='var(--text-muted)'">${awayProbName}</a>`
+    : 'TBD';
+  const homeProb = homeProbId
+    ? `<a href="players.html?id=${homeProbId}&name=${encodeURIComponent(homeProbName)}&type=pitcher&team=${homeAbbr}" style="color:var(--text-muted);text-decoration:none;" onmouseover="this.style.color='var(--gold)'" onmouseout="this.style.color='var(--text-muted)'">${homeProbName}</a>`
+    : 'TBD';
+
+  const status = game.status?.detailedState || 'Scheduled';
+  const isLive  = status.includes('Progress') || status.includes('Live');
+  const isFinal = status.includes('Final');
+  const statusCls = isLive ? 'live' : isFinal ? 'final' : 'sched';
+  const statusTxt = isLive ? '● LIVE' : isFinal ? 'FINAL' : fmtTime(game.gameDate);
+
+  const liveScore = isLive || isFinal
+    ? `<span class="score-display">${game.teams.away.score ?? 0} – ${game.teams.home.score ?? 0}</span>`
+    : `<span class="vs-text">VS</span>`;
+
+  const pfHRStr  = pfHR  > 0 ? `+${pfHR}%`  : `${pfHR}%`;
+  const pfRunStr = pfRuns > 0 ? `+${pfRuns}%` : `${pfRuns}%`;
+  const pfHRCls  = pfHR  > 3 ? 'pos' : pfHR < -3 ? 'neg' : 'neu';
+  const pfRunCls = pfRuns > 3 ? 'pos' : pfRuns < -3 ? 'neg' : 'neu';
+
+  const pillHtml = isDome
+    ? `<span class="w-pill dome">DOME</span>`
+    : envCls === 'hitting'
+      ? `<span class="w-pill hitting">HITTER'S PARK</span>`
+      : envCls === 'pitching'
+        ? `<span class="w-pill pitching">PITCHER'S PARK</span>`
+        : `<span class="w-pill neutral">NEUTRAL</span>`;
+
+  const windHtml = isDome
+    ? '<span style="color:var(--text-muted);font-size:11px;">No Wind Data</span>'
+    : wind != null
+      ? `${windDirToArrow(windD)} <span class="wind-speed-val">${wind}</span><span class="wind-speed-unit"> mph ${degToCardinal(windD)}</span>`
+      : '—';
+
+  const tempHtml = isDome
+    ? `<span class="weather-temp">72°</span>`
+    : tempF != null
+      ? `<span class="weather-temp">${tempF}°</span>`
+      : `<span class="weather-temp">—</span>`;
+
+  const pfBarPct  = Math.min(100, Math.max(0, 50 + pfHR * 2));
+  const pfBarCls  = envCls === 'hitting' ? 'pf-hitting' : envCls === 'pitching' ? 'pf-pitching' : 'pf-neutral';
+  const pfBarFill = isDome ? 0 : pfBarPct;
+
+  const bannerTxt = pfBannerText(pf || { hr: 0 }, stadium);
+
+  return `
+  <div class="game-card" data-env="${envCls}" data-dome="${isDome}">
+    <div class="weather-band ${wDisp.cls}">
+      <div class="weather-left">
+        <span class="stadium-name">${stadium.name}</span>
+        <div class="weather-main">
+          <span class="weather-icon">${wDisp.icon}</span>
+          ${tempHtml}
+        </div>
+        <span class="weather-desc">${wDisp.desc}${stadium.city ? ' · ' + stadium.city : ''}</span>
+      </div>
+      <div class="weather-right">
+        <div class="wind-row">${windHtml}</div>
+        <div class="weather-pills">${pillHtml}</div>
+      </div>
+    </div>
+
+    <div class="park-factor-bar">
+      <div class="park-factor-fill ${pfBarCls}" style="width:${pfBarFill}%"></div>
+    </div>
+
+    <div class="game-info">
+      <div class="game-time-row">
+        <span class="game-time">${stadium.city || game.venue.name}</span>
+        <span class="game-status ${statusCls}">${statusTxt}</span>
+      </div>
+
+      <div class="teams-row">
+        <div class="team away">
+          <span class="team-abbr">${awayAbbr}</span>
+          <span class="team-record">${awayRec}</span>
+          <span class="team-pitcher">${awayProb}</span>
+        </div>
+        <div class="vs-col">
+          ${liveScore}
+        </div>
+        <div class="team home">
+          <span class="team-abbr">${homeAbbr}</span>
+          <span class="team-record">${homeRec}</span>
+          <span class="team-pitcher">${homeProb}</span>
+        </div>
+      </div>
+
+      ${!isDome ? `
+      <div class="pf-row">
+        <div class="pf-stat" data-tip="Home Run park factor vs. MLB average">
+          <span class="pf-val ${pfHRCls}">${pfHRStr}</span>
+          <span class="pf-lbl">HR Factor</span>
+        </div>
+        <div class="pf-stat" data-tip="Overall run environment vs. MLB average">
+          <span class="pf-val ${pfRunCls}">${pfRunStr}</span>
+          <span class="pf-lbl">Run Factor</span>
+        </div>
+        <div class="pf-stat" data-tip="Wind speed at game time">
+          <span class="pf-val neu">${wind != null ? wind + ' mph' : '—'}</span>
+          <span class="pf-lbl">Wind</span>
+        </div>
+        <div class="pf-stat" data-tip="Game temperature">
+          <span class="pf-val neu">${tempF != null ? tempF + '°F' : '—'}</span>
+          <span class="pf-lbl">Temp</span>
+        </div>
+      </div>
+      ` : ''}
+    </div>
+
+    <div class="pf-banner">
+      <span class="icon">ℹ</span>
+      ${bannerTxt}
+    </div>
+  </div>`;
+}
+
+// ── FILTER ──
+let allCards = [];
+
+function filterGames(type, btn) {
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.game-card').forEach(card => {
+    if (type === 'all')      card.style.display = '';
+    else if (type === 'dome') card.style.display = card.dataset.dome === 'true' ? '' : 'none';
+    else                     card.style.display = card.dataset.env === type ? '' : 'none';
+  });
+}
+
+// ── FETCH WEATHER (Open-Meteo, free, no key) ──
+async function fetchWeather(lat, lon) {
+  try {
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weathercode,windspeed_10m,winddirection_10m&temperature_unit=fahrenheit&windspeed_unit=mph&forecast_days=1`;
+    const r   = await fetch(url);
+    const d   = await r.json();
+    return d.current;
+  } catch { return null; }
+}
+
+// ── FETCH GAMES (MLB Stats API, free, no key) ──
+async function fetchGames() {
+  const today = new Date().toISOString().split('T')[0];
+  const url   = `https://statsapi.mlb.com/api/v1/schedule?sportId=1&date=${today}&hydrate=team,linescore,probablePitcher,venue`;
+  const r     = await fetch(url);
+  const d     = await r.json();
+  return d.dates?.[0]?.games || [];
+}
+
+// ── MAIN INIT ──
+async function init() {
+  // Set hero date
+  const today   = new Date();
+  document.getElementById('hero-date').textContent =
+    today.toLocaleDateString('en-US', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+
+  const grid = document.getElementById('games-grid');
+
+  let games = [];
+  try {
+    games = await fetchGames();
+  } catch(e) {
+    grid.innerHTML = `<div style="grid-column:1/-1;padding:40px;text-align:center;color:var(--text-muted)">
+      <div style="font-size:24px;margin-bottom:12px">⚾</div>
+      <div>Could not load today's schedule. Check your connection.</div>
+    </div>`;
+    document.getElementById('loading')?.classList.remove('show');
+    return;
+  }
+
+  if (games.length === 0) {
+    grid.innerHTML = `<div style="grid-column:1/-1;padding:48px;text-align:center;color:var(--text-muted)">
+      <div style="font-size:32px;margin-bottom:12px">🌙</div>
+      <div style="font-size:16px;margin-bottom:6px;color:var(--text)">No games today</div>
+      <div style="font-size:12px">Check back on the next game day.</div>
+    </div>`;
+    document.getElementById('loading')?.classList.remove('show');
+    document.getElementById('stat-games').textContent = '0';
+    return;
+  }
+
+  // Fetch weather for unique venues
+  const venueWeather = {};
+  const weatherPromises = games.map(async (game) => {
+    const venueId = game.venue.id;
+    if (!venueWeather[venueId]) {
+      const s = STADIUMS[venueId];
+      if (s) {
+        venueWeather[venueId] = await fetchWeather(s.lat, s.lon);
+      }
+    }
+  });
+  await Promise.all(weatherPromises);
+
+  // Calc park factors & render
+  let hitterCount = 0, domeCount = 0, temps = [];
+  let cardsHtml = '';
+
+  for (const game of games) {
+    const venueId = game.venue.id;
+    const stadium = STADIUMS[venueId] || { dome: false, alt: 100 };
+    const weather = venueWeather[venueId];
+    let pf = null;
+
+    if (weather && !stadium.dome) {
+      pf = calcParkFactor({
+        windspeed:    weather.windspeed_10m || 0,
+        winddirection:weather.winddirection_10m || 180,
+        temperature:  weather.temperature_2m || 70,
+      }, stadium);
+      if (pf.env === 'hitting') hitterCount++;
+      if (weather.temperature_2m) temps.push(weather.temperature_2m);
+    }
+    if (stadium.dome === 'fixed' || stadium.dome === 'retractable') domeCount++;
+
+    cardsHtml += renderCard(game, weather, pf);
+  }
+
+  // Update summary
+  document.getElementById('stat-games').textContent   = games.length;
+  document.getElementById('stat-hitting').textContent  = hitterCount;
+  document.getElementById('stat-dome').textContent     = domeCount;
+  if (temps.length) {
+    const avgF = Math.round(temps.reduce((a,b)=>a+b,0)/temps.length * 9/5 + 32);
+    document.getElementById('stat-avg-temp').textContent = avgF + '°';
+  }
+
+  grid.innerHTML = cardsHtml;
+  document.getElementById('loading')?.classList.remove('show');
+}
+
+// Auto-refresh every 5 minutes
+init();
+setInterval(init, 5 * 60 * 1000);
+</script>
+</body>
+</html>

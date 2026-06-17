@@ -1,0 +1,1036 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DiamondCast — Player Stats & Pitch Arsenal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --navy:       #0A1628;
+    --navy-card:  #111E33;
+    --navy-deep:  #0D1A2E;
+    --navy-hover: #162340;
+    --gold:       #C8A84B;
+    --gold-dim:   #8A6F2E;
+    --text:       #E8EDF2;
+    --text-muted: #6B8CAE;
+    --text-dim:   #3D5470;
+    --green:      #3CCF74;
+    --red:        #E05555;
+    --blue:       #4A9EF5;
+    --purple:     #9B72DB;
+    --orange:     #F5A623;
+    --border:     rgba(200,168,75,0.15);
+    --border-dim: rgba(107,140,174,0.12);
+  }
+
+  body {
+    background: var(--navy);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+  }
+
+  /* ── HEADER ── */
+  header {
+    background: var(--navy-deep);
+    border-bottom: 1px solid var(--border);
+    padding: 0 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 64px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .logo { display: flex; align-items: baseline; gap: 6px; text-decoration: none; }
+  .logo-mark { font-family: 'Bebas Neue'; font-size: 28px; letter-spacing: 2px; color: var(--text); }
+  .logo-mark span { color: var(--gold); }
+  .logo-sub { font-size: 10px; font-weight: 500; letter-spacing: 3px; text-transform: uppercase; color: var(--text-muted); }
+
+  nav { display: flex; gap: 28px; }
+  nav a { font-size: 12px; font-weight: 500; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-muted); text-decoration: none; transition: color 0.2s; }
+  nav a:hover, nav a.active { color: var(--gold); }
+
+  .live-badge { display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 600; letter-spacing: 1px; color: var(--green); text-transform: uppercase; }
+  .live-dot { width: 6px; height: 6px; background: var(--green); border-radius: 50%; animation: pulse 1.8s ease-in-out infinite; }
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.4;transform:scale(.8)} }
+
+  /* ── SEARCH HERO ── */
+  .search-hero {
+    background: linear-gradient(135deg, #0D1A2E 0%, #111E33 60%, #0A1628 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 40px 32px 32px;
+    position: relative;
+    overflow: hidden;
+  }
+  .search-hero::before {
+    content:''; position:absolute; top:-80px; right:-80px;
+    width:400px; height:400px;
+    background:radial-gradient(circle,rgba(200,168,75,.05) 0%,transparent 70%);
+    pointer-events:none;
+  }
+  .search-inner { max-width: 800px; margin: 0 auto; text-align: center; position: relative; z-index: 1; }
+
+  .page-eyebrow { font-size:10px; font-weight:600; letter-spacing:3px; text-transform:uppercase; color:var(--gold); margin-bottom:8px; }
+  .page-title { font-family:'Bebas Neue'; font-size:clamp(32px,5vw,54px); letter-spacing:3px; color:var(--text); margin-bottom:6px; }
+  .page-sub { font-size:13px; color:var(--text-muted); margin-bottom:28px; }
+
+  .search-box {
+    display: flex;
+    gap: 0;
+    max-width: 560px;
+    margin: 0 auto;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    background: var(--navy-card);
+  }
+
+  .search-type {
+    background: rgba(200,168,75,.1);
+    border: none;
+    border-right: 1px solid var(--border);
+    color: var(--gold);
+    font-family: 'Inter';
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 0 16px;
+    cursor: pointer;
+    outline: none;
+    min-width: 110px;
+  }
+
+  .search-type option { background: var(--navy-card); color: var(--text); }
+
+  .search-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: var(--text);
+    font-family: 'Inter';
+    font-size: 15px;
+    padding: 14px 16px;
+    outline: none;
+  }
+  .search-input::placeholder { color: var(--text-dim); }
+
+  .search-btn {
+    background: var(--gold);
+    border: none;
+    color: var(--navy);
+    font-family: 'Inter';
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 0 20px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .search-btn:hover { background: #D4B55A; }
+
+  /* Autocomplete */
+  .autocomplete-wrap { position: relative; max-width: 560px; margin: 0 auto; }
+  .autocomplete-list {
+    position: absolute;
+    top: 100%; left: 0; right: 0;
+    background: var(--navy-card);
+    border: 1px solid var(--border);
+    border-top: none;
+    border-radius: 0 0 8px 8px;
+    z-index: 200;
+    max-height: 240px;
+    overflow-y: auto;
+    display: none;
+  }
+  .autocomplete-list.show { display: block; }
+  .ac-item {
+    padding: 10px 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-bottom: 1px solid var(--border-dim);
+    transition: background 0.15s;
+  }
+  .ac-item:hover { background: var(--navy-hover); }
+  .ac-name { font-size: 14px; color: var(--text); }
+  .ac-team { font-size: 11px; color: var(--text-muted); margin-left: auto; }
+  .ac-pos { font-size: 10px; font-weight: 700; letter-spacing: 1px; color: var(--gold); background: rgba(200,168,75,.1); border-radius: 3px; padding: 2px 6px; }
+
+  /* ── MAIN ── */
+  .main { max-width: 1200px; margin: 0 auto; padding: 32px 24px 64px; }
+
+  /* Player profile header */
+  .player-header {
+    display: flex;
+    gap: 24px;
+    align-items: flex-start;
+    margin-bottom: 32px;
+    padding: 24px;
+    background: var(--navy-card);
+    border: 1px solid var(--border-dim);
+    border-radius: 12px;
+    display: none;
+  }
+  .player-header.show { display: flex; }
+
+  .player-avatar {
+    width: 80px; height: 80px;
+    border-radius: 50%;
+    background: var(--navy-hover);
+    border: 2px solid var(--border);
+    overflow: hidden;
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Bebas Neue'; font-size: 28px; color: var(--text-muted);
+  }
+  .player-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+  .player-meta { flex: 1; }
+  .player-name-row { display: flex; align-items: baseline; gap: 12px; margin-bottom: 4px; }
+  .player-name { font-family: 'Bebas Neue'; font-size: 36px; letter-spacing: 2px; line-height: 1; }
+  .player-number { font-family: 'Bebas Neue'; font-size: 24px; color: var(--text-muted); }
+  .player-details { font-size: 13px; color: var(--text-muted); margin-bottom: 12px; }
+  .player-details span { margin-right: 14px; }
+  .player-details strong { color: var(--text); }
+
+  .player-quick-stats {
+    display: flex; gap: 24px; flex-wrap: wrap;
+  }
+  .pqs-item { display: flex; flex-direction: column; gap: 2px; }
+  .pqs-val { font-family: 'JetBrains Mono'; font-size: 20px; font-weight: 600; color: var(--text); }
+  .pqs-lbl { font-size: 10px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-muted); }
+
+  .player-badges { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+  .badge {
+    font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
+    padding: 3px 10px; border-radius: 4px;
+  }
+  .badge-pos  { background: rgba(200,168,75,.15); color: var(--gold); }
+  .badge-hand { background: rgba(74,158,245,.12); color: var(--blue); }
+  .badge-team { background: rgba(60,207,116,.1); color: var(--green); }
+
+  /* Tab nav */
+  .tab-nav {
+    display: flex; gap: 0;
+    border-bottom: 1px solid var(--border-dim);
+    margin-bottom: 28px;
+  }
+  .tab-btn {
+    font-size: 12px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase;
+    padding: 12px 20px;
+    background: none; border: none; border-bottom: 2px solid transparent;
+    color: var(--text-muted); cursor: pointer; transition: all 0.2s;
+    margin-bottom: -1px;
+  }
+  .tab-btn:hover { color: var(--text); }
+  .tab-btn.active { color: var(--gold); border-bottom-color: var(--gold); }
+
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* ── PITCH ARSENAL ── */
+  .arsenal-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 12px;
+    margin-bottom: 28px;
+  }
+
+  .pitch-card {
+    background: var(--navy-card);
+    border: 1px solid var(--border-dim);
+    border-radius: 8px;
+    padding: 16px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+  .pitch-card:hover { border-color: rgba(200,168,75,.3); }
+  .pitch-card::before {
+    content:''; position:absolute; top:0; left:0; right:0; height:3px;
+  }
+
+  .pitch-type-label {
+    font-family: 'Bebas Neue'; font-size: 20px; letter-spacing: 2px;
+    color: var(--text); margin-bottom: 2px;
+  }
+  .pitch-abbr { font-size: 10px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 12px; }
+  .pitch-usage-bar { height: 4px; background: var(--border-dim); border-radius: 2px; margin-bottom: 12px; overflow: hidden; }
+  .pitch-usage-fill { height: 100%; border-radius: 2px; transition: width 0.8s ease; }
+  .pitch-usage-pct { font-family: 'JetBrains Mono'; font-size: 12px; color: var(--text-muted); margin-bottom: 12px; }
+
+  .pitch-stats { display: flex; flex-direction: column; gap: 6px; }
+  .pitch-stat-row { display: flex; justify-content: space-between; align-items: center; }
+  .ps-label { font-size: 10px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: var(--text-dim); }
+  .ps-val { font-family: 'JetBrains Mono'; font-size: 13px; font-weight: 600; color: var(--text); }
+
+  /* Pitch colors */
+  .pitch-FF { --pc: #E05555; } .pitch-FF::before { background: #E05555; }
+  .pitch-SI { --pc: #F5A623; } .pitch-SI::before { background: #F5A623; }
+  .pitch-FC { --pc: #FFD700; } .pitch-FC::before { background: #FFD700; }
+  .pitch-SL { --pc: #4A9EF5; } .pitch-SL::before { background: #4A9EF5; }
+  .pitch-CU { --pc: #9B72DB; } .pitch-CU::before { background: #9B72DB; }
+  .pitch-CH { --pc: #3CCF74; } .pitch-CH::before { background: #3CCF74; }
+  .pitch-FS { --pc: #20B2AA; } .pitch-FS::before { background: #20B2AA; }
+  .pitch-SV { --pc: #FF69B4; } .pitch-SV::before { background: #FF69B4; }
+  .pitch-KC { --pc: #8B4513; } .pitch-KC::before { background: #8B4513; }
+  .pitch-ST { --pc: #C0C0C0; } .pitch-ST::before { background: #C0C0C0; }
+
+  /* Statcast grade bubbles (percentile) */
+  .percentile-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 10px;
+    margin-bottom: 28px;
+  }
+
+  .percentile-card {
+    background: var(--navy-card);
+    border: 1px solid var(--border-dim);
+    border-radius: 8px;
+    padding: 14px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .pct-circle {
+    width: 48px; height: 48px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Bebas Neue'; font-size: 16px;
+    flex-shrink: 0;
+    border: 2px solid;
+  }
+  .pct-circle.elite    { background: rgba(60,207,116,.15); border-color: #3CCF74; color: #3CCF74; }
+  .pct-circle.great    { background: rgba(74,158,245,.12); border-color: #4A9EF5; color: #4A9EF5; }
+  .pct-circle.avg      { background: rgba(200,168,75,.12); border-color: var(--gold); color: var(--gold); }
+  .pct-circle.below    { background: rgba(224,85,85,.12);  border-color: #E05555; color: #E05555; }
+
+  .pct-info { flex: 1; min-width: 0; }
+  .pct-metric { font-size: 11px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .pct-val { font-family: 'JetBrains Mono'; font-size: 18px; font-weight: 600; color: var(--text); }
+  .pct-sub { font-size: 10px; color: var(--text-muted); }
+
+  /* Section header */
+  .section-hdr {
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 16px;
+  }
+  .section-hdr-title { font-family: 'Bebas Neue'; font-size: 16px; letter-spacing: 2px; color: var(--text-muted); }
+  .section-hdr-line { flex: 1; height: 1px; background: var(--border-dim); }
+
+  /* Stat table */
+  .stat-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    margin-bottom: 28px;
+  }
+  .stat-table th {
+    font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;
+    color: var(--text-muted); text-align: right; padding: 8px 12px;
+    border-bottom: 1px solid var(--border-dim);
+    white-space: nowrap;
+  }
+  .stat-table th:first-child { text-align: left; }
+  .stat-table td { padding: 10px 12px; text-align: right; border-bottom: 1px solid rgba(61,84,112,.15); }
+  .stat-table td:first-child { text-align: left; font-weight: 500; color: var(--text); }
+  .stat-table tbody tr:hover { background: rgba(255,255,255,.02); }
+  .stat-table .mono { font-family: 'JetBrains Mono'; font-size: 12px; color: var(--text); }
+  .stat-table .lbl { color: var(--text-muted); }
+
+  /* Loading / empty states */
+  .state-box {
+    padding: 60px 32px; text-align: center;
+    display: flex; flex-direction: column; align-items: center; gap: 12px;
+  }
+  .state-icon { font-size: 40px; }
+  .state-title { font-size: 16px; color: var(--text); font-weight: 500; }
+  .state-sub { font-size: 12px; color: var(--text-muted); max-width: 400px; line-height: 1.6; }
+  .spinner { width:32px; height:32px; border:2px solid var(--border-dim); border-top-color:var(--gold); border-radius:50%; animation:spin .8s linear infinite; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+
+  /* Pitch movement chart */
+  .movement-chart-wrap {
+    background: var(--navy-card);
+    border: 1px solid var(--border-dim);
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 28px;
+  }
+  .movement-chart { position: relative; width: 100%; aspect-ratio: 1; max-width: 320px; margin: 0 auto; }
+  .movement-svg { width: 100%; height: 100%; }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    header { padding: 0 16px; }
+    nav { display: none; }
+    .search-hero { padding: 24px 16px; }
+    .main { padding: 20px 12px 48px; }
+    .player-header { flex-direction: column; }
+    .arsenal-grid { grid-template-columns: repeat(2, 1fr); }
+    .percentile-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <a class="logo" href="index.html">
+    <span class="logo-mark">Diamond<span>Slates</span></span>
+    <span class="logo-sub">MLB Intelligence</span>
+  </a>
+  <nav>
+    <a href="index.html">Today's Slate</a>
+    <a href="#">Stadiums</a>
+    <a href="players.html" class="active">Players</a>
+    <a href="park-factors.html">Park Factors</a>
+    <a href="#">Pitch Arsenal</a>
+  </nav>
+  <div class="live-badge"><span class="live-dot"></span>Live Data</div>
+</header>
+
+<!-- SEARCH HERO -->
+<div class="search-hero">
+  <div class="search-inner">
+    <div class="page-eyebrow">Statcast · Baseball Savant</div>
+    <div class="page-title">PLAYER PROFILES</div>
+    <div class="page-sub">Search any MLB pitcher or batter for Statcast metrics, pitch arsenals, and percentile rankings</div>
+
+    <div class="autocomplete-wrap">
+      <div class="search-box">
+        <select class="search-type" id="player-type">
+          <option value="pitcher">Pitcher</option>
+          <option value="batter">Batter</option>
+        </select>
+        <input class="search-input" id="search-input" type="text"
+               placeholder="Search player name..." autocomplete="off">
+        <button class="search-btn" onclick="doSearch()">Search</button>
+      </div>
+      <div class="autocomplete-list" id="ac-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<main class="main">
+
+  <!-- Player header (hidden until search) -->
+  <div class="player-header" id="player-header">
+    <div class="player-avatar" id="player-avatar">?</div>
+    <div class="player-meta">
+      <div class="player-name-row">
+        <span class="player-name" id="player-name">—</span>
+        <span class="player-number" id="player-num">#—</span>
+      </div>
+      <div class="player-details" id="player-details"></div>
+      <div class="player-quick-stats" id="player-quick-stats"></div>
+      <div class="player-badges" id="player-badges"></div>
+    </div>
+  </div>
+
+  <!-- Tab navigation -->
+  <div class="tab-nav" id="tab-nav" style="display:none">
+    <button class="tab-btn active" onclick="switchTab('arsenal', this)" id="tab-arsenal">⚾ Pitch Arsenal</button>
+    <button class="tab-btn" onclick="switchTab('statcast', this)" id="tab-statcast">📊 Statcast Grades</button>
+    <button class="tab-btn" onclick="switchTab('splits', this)" id="tab-splits">📋 Season Stats</button>
+    <button class="tab-btn" onclick="switchTab('movement', this)" id="tab-movement">🎯 Pitch Movement</button>
+  </div>
+
+  <!-- TAB: Arsenal -->
+  <div class="tab-content active" id="content-arsenal">
+    <div class="state-box" id="initial-state">
+      <div class="state-icon">⚾</div>
+      <div class="state-title">Search for a player above</div>
+      <div class="state-sub">Enter any MLB pitcher or batter name to load their Statcast profile, pitch arsenal, and percentile rankings from Baseball Savant.</div>
+    </div>
+    <div id="arsenal-content"></div>
+  </div>
+
+  <!-- TAB: Statcast Grades -->
+  <div class="tab-content" id="content-statcast">
+    <div id="statcast-content"></div>
+  </div>
+
+  <!-- TAB: Season Stats -->
+  <div class="tab-content" id="content-splits">
+    <div id="splits-content"></div>
+  </div>
+
+  <!-- TAB: Movement Chart -->
+  <div class="tab-content" id="content-movement">
+    <div id="movement-content"></div>
+  </div>
+
+</main>
+
+<script>
+// ── PITCH TYPE MAPPINGS ──
+const PITCH_NAMES = {
+  FF: 'Four-Seam Fastball', SI: 'Sinker', FC: 'Cutter', SL: 'Slider',
+  CU: 'Curveball', CH: 'Changeup', FS: 'Splitter', SV: 'Sweeper',
+  KC: 'Knuckle Curve', ST: 'Sweeper', KN: 'Knuckleball', EP: 'Eephus',
+  FA: 'Fastball', FT: 'Two-Seam Fastball', SC: 'Screwball', GY: 'Gyroball',
+};
+
+const PITCH_COLORS = {
+  FF:'#E05555', SI:'#F5A623', FC:'#FFD700', SL:'#4A9EF5',
+  CU:'#9B72DB', CH:'#3CCF74', FS:'#20B2AA', SV:'#FF69B4',
+  KC:'#CD853F', ST:'#C0C0C0', KN:'#888', FA:'#E05555',
+};
+
+// ── PLAYER SEARCH (MLB Stats API) ──
+let searchTimer = null;
+let currentPlayer = null;
+let currentType = 'pitcher';
+
+const searchInput = document.getElementById('search-input');
+const acList      = document.getElementById('ac-list');
+const playerType  = document.getElementById('player-type');
+
+searchInput.addEventListener('input', () => {
+  clearTimeout(searchTimer);
+  const q = searchInput.value.trim();
+  if (q.length < 2) { acList.classList.remove('show'); return; }
+  searchTimer = setTimeout(() => fetchSuggestions(q), 300);
+});
+
+searchInput.addEventListener('keydown', e => {
+  if (e.key === 'Enter') doSearch();
+});
+
+document.addEventListener('click', e => {
+  if (!e.target.closest('.autocomplete-wrap')) acList.classList.remove('show');
+});
+
+async function fetchSuggestions(query) {
+  try {
+    const url = `https://statsapi.mlb.com/api/v1/people/search?names=${encodeURIComponent(query)}&sportIds=1&hydrate=currentTeam`;
+    const r = await fetch(url);
+    const d = await r.json();
+    const players = (d.people || []).slice(0, 8);
+    renderSuggestions(players);
+  } catch { acList.classList.remove('show'); }
+}
+
+function renderSuggestions(players) {
+  if (!players.length) { acList.classList.remove('show'); return; }
+  acList.innerHTML = players.map(p => {
+    const team = p.currentTeam?.abbreviation || '—';
+    const pos  = p.primaryPosition?.abbreviation || '?';
+    return `<div class="ac-item" onclick="selectPlayer(${p.id}, '${escHtml(p.fullName)}', '${pos}', '${team}')">
+      <span class="ac-pos">${pos}</span>
+      <span class="ac-name">${escHtml(p.fullName)}</span>
+      <span class="ac-team">${team}</span>
+    </div>`;
+  }).join('');
+  acList.classList.add('show');
+}
+
+function escHtml(s) { return s.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+
+async function selectPlayer(id, name, pos, team) {
+  acList.classList.remove('show');
+  searchInput.value = name;
+  currentType = playerType.value;
+  await loadPlayer(id, name, pos, team);
+}
+
+async function doSearch() {
+  const q = searchInput.value.trim();
+  if (!q) return;
+  try {
+    const url = `https://statsapi.mlb.com/api/v1/people/search?names=${encodeURIComponent(q)}&sportIds=1&hydrate=currentTeam`;
+    const r = await fetch(url);
+    const d = await r.json();
+    const p = (d.people || [])[0];
+    if (p) {
+      const pos  = p.primaryPosition?.abbreviation || '?';
+      const team = p.currentTeam?.abbreviation || '—';
+      await loadPlayer(p.id, p.fullName, pos, team);
+    }
+  } catch(e) { console.error(e); }
+}
+
+// ── LOAD PLAYER FULL PROFILE ──
+async function loadPlayer(mlbId, name, pos, team) {
+  currentPlayer = { mlbId, name, pos, team };
+  showLoading();
+
+  // Show tabs
+  document.getElementById('tab-nav').style.display = 'flex';
+  document.getElementById('initial-state').style.display = 'none';
+
+  // Fetch player details + stats in parallel
+  const [details, statcastData, pitchArsenal] = await Promise.all([
+    fetchPlayerDetails(mlbId),
+    fetchStatcastStats(mlbId, currentType),
+    currentType === 'pitcher' ? fetchPitchArsenal(mlbId) : null,
+  ]);
+
+  renderPlayerHeader(details, name, pos, team, statcastData);
+  renderArsenal(pitchArsenal, statcastData, currentType);
+  renderStatcastGrades(statcastData, currentType);
+  renderSeasonStats(statcastData, currentType);
+  renderMovementChart(pitchArsenal);
+
+  hideLoading();
+}
+
+async function fetchPlayerDetails(mlbId) {
+  try {
+    const r = await fetch(`https://statsapi.mlb.com/api/v1/people/${mlbId}?hydrate=currentTeam,stats(group=[pitching,hitting],type=[season],season=2025)`);
+    const d = await r.json();
+    return d.people?.[0] || {};
+  } catch { return {}; }
+}
+
+// Baseball Savant CSV endpoint (public, no key)
+async function fetchStatcastStats(mlbId, type) {
+  const year = 2025;
+  try {
+    // Expected stats leaderboard per player
+    const url = `https://baseballsavant.mlb.com/leaderboard/expected_statistics?type=${type}&year=${year}&position=&team=&min=1&csv=true`;
+    const r   = await fetch(url);
+    const txt = await r.text();
+    return parseCSV(txt, mlbId);
+  } catch { return null; }
+}
+
+async function fetchPitchArsenal(mlbId) {
+  try {
+    const url = `https://baseballsavant.mlb.com/leaderboard/pitch-arsenal-stats?type=pitcher&pitchType=&year=2025&team=&min=1&csv=true`;
+    const r   = await fetch(url);
+    const txt = await r.text();
+    return parsePitchCSV(txt, mlbId);
+  } catch { return null; }
+}
+
+function parseCSV(csv, targetId) {
+  const lines = csv.split('\n').filter(Boolean);
+  if (lines.length < 2) return null;
+  const headers = lines[0].split(',').map(h => h.trim().replace(/"/g,''));
+  for (let i = 1; i < lines.length; i++) {
+    const vals = splitCSVLine(lines[i]);
+    if (!vals.length) continue;
+    const row = {};
+    headers.forEach((h, j) => row[h] = vals[j] || '');
+    if (String(row['player_id'] || row['mlb_id'] || '').trim() === String(targetId)) return row;
+  }
+  return null;
+}
+
+function parsePitchCSV(csv, targetId) {
+  const lines = csv.split('\n').filter(Boolean);
+  if (lines.length < 2) return [];
+  const headers = lines[0].split(',').map(h => h.trim().replace(/"/g,''));
+  const rows = [];
+  for (let i = 1; i < lines.length; i++) {
+    const vals = splitCSVLine(lines[i]);
+    if (!vals.length) continue;
+    const row = {};
+    headers.forEach((h, j) => row[h] = vals[j] || '');
+    if (String(row['pitcher_id'] || row['player_id'] || '').trim() === String(targetId)) {
+      rows.push(row);
+    }
+  }
+  return rows;
+}
+
+function splitCSVLine(line) {
+  const result = []; let cur = ''; let inQ = false;
+  for (let i = 0; i < line.length; i++) {
+    const c = line[i];
+    if (c === '"') { inQ = !inQ; continue; }
+    if (c === ',' && !inQ) { result.push(cur.trim()); cur = ''; continue; }
+    cur += c;
+  }
+  result.push(cur.trim());
+  return result;
+}
+
+// ── RENDER PLAYER HEADER ──
+function renderPlayerHeader(details, name, pos, team, statcastRow) {
+  const hdr = document.getElementById('player-header');
+  hdr.classList.add('show');
+
+  // Avatar
+  const avEl = document.getElementById('player-avatar');
+  const mlbId = details.id || currentPlayer.mlbId;
+  const imgUrl = `https://img.mlbstatic.com/mlb-photos/image/upload/d_people:generic:headshot:67:current.png/w_213,q_auto:best/v1/people/${mlbId}/headshot/67/current`;
+  avEl.innerHTML = `<img src="${imgUrl}" onerror="this.parentNode.innerHTML='${(name||'?').charAt(0)}'" alt="${name}">`;
+
+  // Name & number
+  document.getElementById('player-name').textContent = name;
+  document.getElementById('player-num').textContent = details.primaryNumber ? `#${details.primaryNumber}` : '';
+
+  // Details
+  const age     = details.currentAge || '—';
+  const bats    = details.batSide?.description || '—';
+  const throws  = details.pitchHand?.description || '—';
+  const teamFull= details.currentTeam?.name || team;
+  document.getElementById('player-details').innerHTML =
+    `<span><strong>${teamFull}</strong></span><span>Age <strong>${age}</strong></span><span>Bats <strong>${bats}</strong></span><span>Throws <strong>${throws}</strong></span>`;
+
+  // Quick stats from statcast row
+  const quickStats = document.getElementById('player-quick-stats');
+  if (statcastRow && currentType === 'pitcher') {
+    const era = getField(statcastRow, 'era','p_era','—');
+    const k9  = getField(statcastRow, 'k_9','p_k_percent','—');
+    const xera= getField(statcastRow, 'xera','xERA','—');
+    const bb9 = getField(statcastRow, 'bb_9','p_bb_percent','—');
+    quickStats.innerHTML = `
+      <div class="pqs-item"><span class="pqs-val">${fmtStat(era)}</span><span class="pqs-lbl">ERA</span></div>
+      <div class="pqs-item"><span class="pqs-val">${fmtStat(xera)}</span><span class="pqs-lbl">xERA</span></div>
+      <div class="pqs-item"><span class="pqs-val">${fmtStat(k9)}%</span><span class="pqs-lbl">K%</span></div>
+      <div class="pqs-item"><span class="pqs-val">${fmtStat(bb9)}%</span><span class="pqs-lbl">BB%</span></div>`;
+  } else if (statcastRow) {
+    const avg  = getField(statcastRow,'ba','avg','—');
+    const xba  = getField(statcastRow,'est_ba','xba','—');
+    const slg  = getField(statcastRow,'est_slg','xslg','—');
+    const woba = getField(statcastRow,'est_woba','xwoba','—');
+    quickStats.innerHTML = `
+      <div class="pqs-item"><span class="pqs-val">${fmtStat(avg)}</span><span class="pqs-lbl">AVG</span></div>
+      <div class="pqs-item"><span class="pqs-val">${fmtStat(xba)}</span><span class="pqs-lbl">xBA</span></div>
+      <div class="pqs-item"><span class="pqs-val">${fmtStat(slg)}</span><span class="pqs-lbl">xSLG</span></div>
+      <div class="pqs-item"><span class="pqs-val">${fmtStat(woba)}</span><span class="pqs-lbl">xwOBA</span></div>`;
+  }
+
+  // Badges
+  const badsEl = document.getElementById('player-badges');
+  badsEl.innerHTML = `
+    <span class="badge badge-pos">${pos}</span>
+    <span class="badge badge-hand">${throws === 'Right' ? 'RHP' : throws === 'Left' ? 'LHP' : throws}</span>
+    <span class="badge badge-team">${team}</span>`;
+}
+
+function getField(row, ...keys) {
+  for (const k of keys) {
+    if (row[k] !== undefined && row[k] !== '') return row[k];
+  }
+  return '—';
+}
+
+function fmtStat(val) {
+  if (!val || val === '—' || val === 'null') return '—';
+  const n = parseFloat(val);
+  if (isNaN(n)) return val;
+  return n.toFixed(3).replace(/^0\./, '.');
+}
+
+function fmtN(val, dec=1) {
+  const n = parseFloat(val);
+  return isNaN(n) ? '—' : n.toFixed(dec);
+}
+
+// ── RENDER ARSENAL ──
+function renderArsenal(pitchRows, statcastRow, type) {
+  const el = document.getElementById('arsenal-content');
+  if (type === 'batter') {
+    el.innerHTML = `<div class="state-box">
+      <div class="state-icon">🏏</div>
+      <div class="state-title">Batter Profile</div>
+      <div class="state-sub">Pitch arsenal view is for pitchers. Switch to Statcast Grades tab for this batter's metrics.</div>
+    </div>`;
+    return;
+  }
+
+  if (!pitchRows || !pitchRows.length) {
+    el.innerHTML = `<div class="state-box">
+      <div class="state-icon">🔍</div>
+      <div class="state-title">No pitch arsenal data found</div>
+      <div class="state-sub">This pitcher may not have enough innings to qualify, or data isn't available for this season yet.</div>
+    </div>`;
+    return;
+  }
+
+  const sectionHdr = `<div class="section-hdr"><span class="section-hdr-title">PITCH ARSENAL</span><div class="section-hdr-line"></div></div>`;
+  let cardsHtml = '<div class="arsenal-grid">';
+
+  for (const row of pitchRows) {
+    const pt   = (row['pitch_type'] || row['pitch_name'] || 'FA').trim();
+    const pName= PITCH_NAMES[pt] || pt;
+    const usage= parseFloat(row['pitches'] || row['pitch_percent'] || 0);
+    const vel  = parseFloat(row['avg_speed'] || row['release_speed'] || 0);
+    const spin = parseFloat(row['avg_spin'] || row['release_spin_rate'] || 0);
+    const whiff= parseFloat(row['whiff_percent'] || row['whiff_pct'] || 0);
+    const rv   = parseFloat(row['run_value_per_100'] || row['run_value'] || 0);
+    const color= PITCH_COLORS[pt] || '#888';
+
+    // Usage is total pitches; we need to calc % across all pitches
+    const totalPitches = pitchRows.reduce((s,r) => s + parseFloat(r['pitches'] || 0), 0);
+    const usagePct = totalPitches > 0 ? (usage / totalPitches * 100) : 0;
+
+    cardsHtml += `
+    <div class="pitch-card pitch-${pt}">
+      <div class="pitch-type-label">${pName}</div>
+      <div class="pitch-abbr">${pt}</div>
+      <div class="pitch-usage-bar">
+        <div class="pitch-usage-fill" style="width:${usagePct.toFixed(1)}%;background:${color}"></div>
+      </div>
+      <div class="pitch-usage-pct">${usagePct.toFixed(1)}% usage</div>
+      <div class="pitch-stats">
+        <div class="pitch-stat-row">
+          <span class="ps-label">Velocity</span>
+          <span class="ps-val">${vel ? vel.toFixed(1) + ' mph' : '—'}</span>
+        </div>
+        <div class="pitch-stat-row">
+          <span class="ps-label">Spin Rate</span>
+          <span class="ps-val">${spin ? Math.round(spin) + ' rpm' : '—'}</span>
+        </div>
+        <div class="pitch-stat-row">
+          <span class="ps-label">Whiff %</span>
+          <span class="ps-val" style="color:${whiff > 30 ? '#3CCF74' : whiff < 15 ? '#E05555' : 'var(--text)'}">${whiff ? whiff.toFixed(1) + '%' : '—'}</span>
+        </div>
+        <div class="pitch-stat-row">
+          <span class="ps-label">Run Value/100</span>
+          <span class="ps-val" style="color:${rv < 0 ? '#3CCF74' : rv > 0 ? '#E05555' : 'var(--text)'}">${rv ? (rv > 0 ? '+' : '') + rv.toFixed(1) : '—'}</span>
+        </div>
+      </div>
+    </div>`;
+  }
+  cardsHtml += '</div>';
+  el.innerHTML = sectionHdr + cardsHtml;
+}
+
+// ── RENDER STATCAST GRADES ──
+function renderStatcastGrades(row, type) {
+  const el = document.getElementById('statcast-content');
+  if (!row) {
+    el.innerHTML = `<div class="state-box"><div class="state-icon">📊</div><div class="state-title">No Statcast data found</div><div class="state-sub">This player may not have enough plate appearances or innings to qualify for Statcast leaderboards this season.</div></div>`;
+    return;
+  }
+
+  const metrics = type === 'pitcher' ? [
+    { key: 'xera',         label: 'xERA',         desc: 'Expected ERA', invert: true },
+    { key: 'xba',          label: 'xBA Against',   desc: 'Expected batting avg vs', invert: true },
+    { key: 'xslg',         label: 'xSLG Against',  desc: 'Expected slug vs', invert: true },
+    { key: 'xwoba',        label: 'xwOBA Against', desc: 'Expected wOBA vs', invert: true },
+    { key: 'k_percent',    label: 'K%',            desc: 'Strikeout rate', invert: false },
+    { key: 'bb_percent',   label: 'BB%',           desc: 'Walk rate', invert: true },
+    { key: 'hard_hit_percent', label: 'Hard Hit% Against', desc: 'Hard hit balls allowed', invert: true },
+    { key: 'barrel_batted_rate', label: 'Barrel% Against', desc: 'Barrels allowed', invert: true },
+    { key: 'avg_best_speed', label: 'Exit Velo Against', desc: 'Avg exit velocity vs', invert: true },
+    { key: 'avg_hyper_speed', label: 'Max EV Against', desc: 'Max exit velocity vs', invert: true },
+  ] : [
+    { key: 'est_ba',        label: 'xBA',          desc: 'Expected batting avg', invert: false },
+    { key: 'est_slg',       label: 'xSLG',         desc: 'Expected slugging', invert: false },
+    { key: 'est_woba',      label: 'xwOBA',        desc: 'Expected wOBA', invert: false },
+    { key: 'barrel_batted_rate', label: 'Barrel%', desc: 'Barrel rate on contact', invert: false },
+    { key: 'hard_hit_percent',   label: 'Hard Hit%', desc: '95+ mph exit velo', invert: false },
+    { key: 'avg_best_speed',     label: 'Avg EV',  desc: 'Average exit velocity', invert: false },
+    { key: 'avg_hyper_speed',    label: 'Max EV',  desc: 'Max exit velocity', invert: false },
+    { key: 'launch_angle_avg',   label: 'Avg LA',  desc: 'Average launch angle', invert: false },
+    { key: 'k_percent',          label: 'K%',       desc: 'Strikeout rate', invert: true },
+    { key: 'bb_percent',         label: 'BB%',      desc: 'Walk rate', invert: false },
+  ];
+
+  // MLB averages for context
+  const AVG = {
+    xba: .245, est_ba: .245, xslg: .390, est_slg: .390,
+    xwoba: .315, est_woba: .315, barrel_batted_rate: 8.0,
+    hard_hit_percent: 35.0, avg_best_speed: 88.5, avg_hyper_speed: 103,
+    k_percent: 22, bb_percent: 8.5, xera: 4.00, launch_angle_avg: 12,
+  };
+
+  let html = `<div class="section-hdr"><span class="section-hdr-title">STATCAST GRADES</span><div class="section-hdr-line"></div></div>
+  <div class="percentile-grid">`;
+
+  for (const m of metrics) {
+    const rawVal = row[m.key] || row[m.label.toLowerCase().replace(/[^a-z0-9]/g,'_')] || '';
+    const val = parseFloat(rawVal);
+    if (isNaN(val)) continue;
+
+    const avg = AVG[m.key] || 1;
+    // Simple percentile estimate vs MLB average
+    let pct;
+    if (m.invert) {
+      pct = Math.max(1, Math.min(99, Math.round(50 + (avg - val) / avg * 50)));
+    } else {
+      pct = Math.max(1, Math.min(99, Math.round(50 + (val - avg) / avg * 50)));
+    }
+
+    const grade = pct >= 80 ? 'elite' : pct >= 60 ? 'great' : pct >= 40 ? 'avg' : 'below';
+
+    // Format value
+    let dispVal = val.toFixed(m.key.includes('speed') || m.key.includes('angle') ? 1 : 3);
+    if (m.key.includes('percent') || m.key.includes('rate')) dispVal = val.toFixed(1) + '%';
+    if (m.key.includes('speed')) dispVal = val.toFixed(1) + ' mph';
+    if (m.key === 'xera') dispVal = val.toFixed(2);
+
+    html += `
+    <div class="percentile-card">
+      <div class="pct-circle ${grade}">${pct}</div>
+      <div class="pct-info">
+        <div class="pct-metric">${m.label}</div>
+        <div class="pct-val">${dispVal}</div>
+        <div class="pct-sub">${m.desc}</div>
+      </div>
+    </div>`;
+  }
+
+  html += `</div>
+  <div style="font-size:11px;color:var(--text-dim);margin-top:-16px;padding:0 4px;">
+    Percentile estimates are approximate, relative to 2025 MLB averages. Data sourced from Baseball Savant.
+  </div>`;
+  el.innerHTML = html;
+}
+
+// ── RENDER SEASON STATS ──
+function renderSeasonStats(row, type) {
+  const el = document.getElementById('splits-content');
+  if (!row) { el.innerHTML = ''; return; }
+
+  const sectionHdr = `<div class="section-hdr"><span class="section-hdr-title">2025 SEASON STATS</span><div class="section-hdr-line"></div></div>`;
+
+  if (type === 'pitcher') {
+    const stats = [
+      ['PA Against',     row['pa'] || row['pa_against'] || '—'],
+      ['AVG Against',    fmtStat(row['ba'] || row['batting_avg'])],
+      ['xBA Against',    fmtStat(row['est_ba'] || row['xba'])],
+      ['xSLG Against',   fmtStat(row['est_slg'] || row['xslg'])],
+      ['xwOBA Against',  fmtStat(row['est_woba'] || row['xwoba'])],
+      ['xERA',           fmtStat(row['xera'])],
+      ['K%',             fmtN(row['k_percent'] || row['k_pct'], 1) + '%'],
+      ['BB%',            fmtN(row['bb_percent'] || row['bb_pct'], 1) + '%'],
+      ['Barrel% Against',fmtN(row['barrel_batted_rate'] || row['barrel_pct'], 1) + '%'],
+      ['Hard Hit% Against', fmtN(row['hard_hit_percent'] || row['hard_hit_pct'], 1) + '%'],
+      ['Avg EV Against', fmtN(row['avg_best_speed'] || row['avg_ev'], 1) + ' mph'],
+    ];
+    el.innerHTML = sectionHdr + buildTable(['Metric', '2025'], stats.map(([l,v]) => [l, v]));
+  } else {
+    const stats = [
+      ['PA',           row['pa'] || '—'],
+      ['AVG',          fmtStat(row['ba'] || row['batting_avg'])],
+      ['xBA',          fmtStat(row['est_ba'] || row['xba'])],
+      ['xSLG',         fmtStat(row['est_slg'] || row['xslg'])],
+      ['xwOBA',        fmtStat(row['est_woba'] || row['xwoba'])],
+      ['Barrel%',      fmtN(row['barrel_batted_rate'] || row['barrel_pct'], 1) + '%'],
+      ['Hard Hit%',    fmtN(row['hard_hit_percent'] || row['hard_hit_pct'], 1) + '%'],
+      ['Avg Exit Velo',fmtN(row['avg_best_speed'] || row['avg_ev'], 1) + ' mph'],
+      ['Max Exit Velo',fmtN(row['avg_hyper_speed'] || row['max_ev'], 1) + ' mph'],
+      ['Avg Launch Angle', fmtN(row['launch_angle_avg'] || row['la_avg'], 1) + '°'],
+      ['K%',           fmtN(row['k_percent'] || row['k_pct'], 1) + '%'],
+      ['BB%',          fmtN(row['bb_percent'] || row['bb_pct'], 1) + '%'],
+    ];
+    el.innerHTML = sectionHdr + buildTable(['Metric', '2025'], stats.map(([l,v]) => [l, v]));
+  }
+}
+
+function buildTable(headers, rows) {
+  let h = `<table class="stat-table"><thead><tr>${headers.map((h,i) => `<th${i===0?'':' style="text-align:right"'}>${h}</th>`).join('')}</tr></thead><tbody>`;
+  for (const r of rows) {
+    h += `<tr>${r.map((c,i) => `<td${i===0?'':' class="mono"'}>${c}</td>`).join('')}</tr>`;
+  }
+  return h + '</tbody></table>';
+}
+
+// ── RENDER MOVEMENT CHART ──
+function renderMovementChart(pitchRows) {
+  const el = document.getElementById('movement-content');
+  if (!pitchRows || !pitchRows.length) {
+    el.innerHTML = `<div class="state-box"><div class="state-icon">🎯</div><div class="state-title">No movement data</div><div class="state-sub">Pitch movement data requires pitcher profile. Search for a pitcher to see pitch break visualization.</div></div>`;
+    return;
+  }
+
+  const pitches = pitchRows.filter(r => r['pfx_x'] && r['pfx_z']);
+
+  const sectionHdr = `<div class="section-hdr"><span class="section-hdr-title">PITCH MOVEMENT CHART</span><div class="section-hdr-line"></div></div>`;
+  const subNote = `<p style="font-size:11px;color:var(--text-muted);margin-bottom:16px;">Horizontal (x) vs. Vertical (z) movement in inches, relative to gravity. Pitcher's POV.</p>`;
+
+  // SVG pitch movement chart
+  const W = 300, H = 300, CX = W/2, CY = H/2, SCALE = 8;
+
+  let dots = '';
+  let legend = '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;">';
+
+  for (const row of pitchRows) {
+    const pt = (row['pitch_type'] || 'FA').trim();
+    const pfxX = parseFloat(row['pfx_x'] || 0) * 12; // convert to inches
+    const pfxZ = parseFloat(row['pfx_z'] || 0) * 12;
+    const color = PITCH_COLORS[pt] || '#888';
+    const name  = PITCH_NAMES[pt] || pt;
+
+    if (isNaN(pfxX) || isNaN(pfxZ)) continue;
+
+    const svgX = CX + pfxX * SCALE;
+    const svgY = CY - pfxZ * SCALE;
+
+    dots += `<circle cx="${svgX.toFixed(1)}" cy="${svgY.toFixed(1)}" r="10"
+      fill="${color}" fill-opacity="0.85" stroke="${color}" stroke-width="1.5">
+      <title>${name}: H ${pfxX.toFixed(1)}" V ${pfxZ.toFixed(1)}"</title>
+    </circle>
+    <text x="${svgX.toFixed(1)}" y="${(svgY+4).toFixed(1)}" text-anchor="middle"
+      font-family="Bebas Neue" font-size="9" fill="white" letter-spacing="0.5">${pt}</text>`;
+
+    legend += `<span style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--text-muted);">
+      <span style="width:10px;height:10px;border-radius:50%;background:${color};flex-shrink:0;"></span>${name}</span>`;
+  }
+
+  legend += '</div>';
+
+  const svg = `
+  <div class="movement-chart-wrap">
+    <svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" class="movement-svg">
+      <!-- Grid -->
+      <line x1="${CX}" y1="10" x2="${CX}" y2="${H-10}" stroke="rgba(107,140,174,.2)" stroke-width="1"/>
+      <line x1="10" y1="${CY}" x2="${W-10}" y2="${CY}" stroke="rgba(107,140,174,.2)" stroke-width="1"/>
+      <!-- Grid rings -->
+      <circle cx="${CX}" cy="${CY}" r="${SCALE*5}" fill="none" stroke="rgba(107,140,174,.1)" stroke-width="1"/>
+      <circle cx="${CX}" cy="${CY}" r="${SCALE*10}" fill="none" stroke="rgba(107,140,174,.1)" stroke-width="1"/>
+      <circle cx="${CX}" cy="${CY}" r="${SCALE*15}" fill="none" stroke="rgba(107,140,174,.08)" stroke-width="1"/>
+      <!-- Axis labels -->
+      <text x="${CX+2}" y="18" font-family="Inter" font-size="9" fill="rgba(107,140,174,.6)" text-anchor="middle">+V</text>
+      <text x="${CX+2}" y="${H-6}" font-family="Inter" font-size="9" fill="rgba(107,140,174,.6)" text-anchor="middle">-V</text>
+      <text x="14" y="${CY-4}" font-family="Inter" font-size="9" fill="rgba(107,140,174,.6)">-H</text>
+      <text x="${W-18}" y="${CY-4}" font-family="Inter" font-size="9" fill="rgba(107,140,174,.6)">+H</text>
+      <!-- Origin dot -->
+      <circle cx="${CX}" cy="${CY}" r="3" fill="rgba(107,140,174,.3)"/>
+      <!-- Pitch dots -->
+      ${dots}
+    </svg>
+    ${legend}
+  </div>`;
+
+  el.innerHTML = sectionHdr + subNote + svg;
+}
+
+// ── TAB SWITCHING ──
+function switchTab(name, btn) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById(`content-${name}`).classList.add('active');
+}
+
+// ── LOADING STATE ──
+function showLoading() {
+  ['arsenal-content','statcast-content','splits-content','movement-content'].forEach(id => {
+    document.getElementById(id).innerHTML = `<div class="state-box"><div class="spinner"></div><div class="state-title">Loading from Baseball Savant...</div></div>`;
+  });
+}
+
+function hideLoading() { /* content replaced inline */ }
+
+// ── PRE-LOAD: check URL params for direct player link ──
+const params = new URLSearchParams(window.location.search);
+if (params.get('id') && params.get('name')) {
+  searchInput.value = params.get('name');
+  playerType.value  = params.get('type') || 'pitcher';
+  loadPlayer(params.get('id'), params.get('name'), params.get('pos') || '?', params.get('team') || '');
+}
+</script>
+</body>
+</html>
