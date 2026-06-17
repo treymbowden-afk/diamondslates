@@ -858,7 +858,7 @@ function pfBannerText(pf, stadium) {
 function renderCard(game, weather, pf) {
   const away    = game.teams.away;
   const home    = game.teams.home;
-  const venueId = game.venue.id;
+  const venueId = game.teams.home.team.id;
   const stadium = STADIUMS[venueId] || { name: game.venue.name, city: '', dome: false, alt: 100 };
   const isDome  = stadium.dome === 'fixed';
 
@@ -1071,7 +1071,7 @@ async function init() {
   // Fetch weather for unique venues
   const venueWeather = {};
   const weatherPromises = games.map(async (game) => {
-    const venueId = game.venue.id;
+    const venueId = game.teams.home.team.id;
     if (!venueWeather[venueId]) {
       const s = STADIUMS[venueId];
       if (s) {
@@ -1086,7 +1086,7 @@ async function init() {
   let cardsHtml = '';
 
   for (const game of games) {
-    const venueId = game.venue.id;
+    const venueId = game.teams.home.team.id;
     const stadium = STADIUMS[venueId] || { dome: false, alt: 100 };
     const weather = venueWeather[venueId];
     let pf = null;

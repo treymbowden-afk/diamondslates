@@ -358,13 +358,13 @@ async function init(){
   // Fetch weather per venue
   const venueWeather={};
   await Promise.all(games.map(async g=>{
-    const vId=g.venue.id; const s=STADIUMS[vId];
+    const vId=g.teams.home.team.id; const s=STADIUMS[vId];
     if(s && !venueWeather[vId]) venueWeather[vId]=await fetchWeather(s.lat,s.lon);
   }));
 
   // Build game data with park factors
   gameData = games.map(g=>{
-    const vId=g.venue.id;
+    const vId=g.teams.home.team.id;
     const stadium=STADIUMS[vId]||{name:g.venue.name,dome:false,alt:100,cfBearing:0,team:'?'};
     const weather=venueWeather[vId]||{};
     const pf=calcParkFactor(weather,stadium,vId);
