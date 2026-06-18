@@ -738,38 +738,42 @@
 
 <script>
 // ── STADIUM DATA (all 30 MLB parks with GPS coords) ──
+// "cfBearing" = compass degrees from home plate toward center field (key to wind modeling)
 const STADIUMS = {
-  108: { name: "Angel Stadium",        city: "Anaheim, CA",    lat: 33.8003, lon: -117.8827, alt: 43,   dome: false, team: "LAA" },
-  109: { name: "Chase Field",          city: "Phoenix, AZ",    lat: 33.4455, lon: -112.0667, alt: 331,  dome: "retractable", team: "ARI" },
-  110: { name: "Camden Yards",         city: "Baltimore, MD",  lat: 39.2839, lon: -76.6218,  alt: 14,   dome: false, team: "BAL" },
-  111: { name: "Fenway Park",          city: "Boston, MA",     lat: 42.3467, lon: -71.0972,  alt: 5,    dome: false, team: "BOS" },
-  112: { name: "Wrigley Field",        city: "Chicago, IL",    lat: 41.9484, lon: -87.6553,  alt: 181,  dome: false, team: "CHC" },
-  145: { name: "Guaranteed Rate Field",city: "Chicago, IL",    lat: 41.8299, lon: -87.6338,  alt: 180,  dome: false, team: "CWS" },
-  113: { name: "Great American BP",    city: "Cincinnati, OH", lat: 39.0979, lon: -84.5082,  alt: 164,  dome: false, team: "CIN" },
-  114: { name: "Progressive Field",    city: "Cleveland, OH",  lat: 41.4962, lon: -81.6852,  alt: 177,  dome: false, team: "CLE" },
-  115: { name: "Coors Field",          city: "Denver, CO",     lat: 39.7559, lon: -104.9942, alt: 1580, dome: false, team: "COL" },
-  116: { name: "Comerica Park",        city: "Detroit, MI",    lat: 42.3390, lon: -83.0485,  alt: 180,  dome: false, team: "DET" },
-  117: { name: "Minute Maid Park",     city: "Houston, TX",    lat: 29.7573, lon: -95.3555,  alt: 12,   dome: "retractable", team: "HOU" },
-  118: { name: "Kauffman Stadium",     city: "Kansas City, MO",lat: 39.0517, lon: -94.4803,  alt: 249,  dome: false, team: "KC"  },
-  119: { name: "Dodger Stadium",       city: "Los Angeles, CA",lat: 34.0739, lon: -118.2400, alt: 168,  dome: false, team: "LAD" },
-  158: { name: "American Family Field",city: "Milwaukee, WI",  lat: 43.0280, lon: -87.9712,  alt: 185,  dome: "retractable", team: "MIL" },
-  142: { name: "Target Field",         city: "Minneapolis, MN",lat: 44.9817, lon: -93.2776,  alt: 262,  dome: false, team: "MIN" },
-  121: { name: "Citi Field",           city: "New York, NY",   lat: 40.7571, lon: -73.8458,  alt: 4,    dome: false, team: "NYM" },
-  147: { name: "Yankee Stadium",       city: "New York, NY",   lat: 40.8296, lon: -73.9262,  alt: 5,    dome: false, team: "NYY" },
-  133: { name: "Sutter Health Park",   city: "Sacramento, CA", lat: 38.5802, lon: -121.5008, alt: 10,   dome: false, team: "OAK" },
-  143: { name: "Citizens Bank Park",   city: "Philadelphia, PA",lat:39.9061, lon: -75.1665,  alt: 7,    dome: false, team: "PHI" },
-  134: { name: "PNC Park",             city: "Pittsburgh, PA", lat: 40.4468, lon: -80.0057,  alt: 222,  dome: false, team: "PIT" },
-  135: { name: "Petco Park",           city: "San Diego, CA",  lat: 32.7076, lon: -117.1570, alt: 6,    dome: false, team: "SD"  },
-  137: { name: "Oracle Park",          city: "San Francisco, CA",lat:37.7786,lon: -122.3893, alt: 4,    dome: false, team: "SF"  },
-  136: { name: "T-Mobile Park",        city: "Seattle, WA",    lat: 47.5914, lon: -122.3325, alt: 4,    dome: "retractable", team: "SEA" },
-  138: { name: "Busch Stadium",        city: "St. Louis, MO",  lat: 38.6226, lon: -90.1928,  alt: 142,  dome: false, team: "STL" },
-  139: { name: "Tropicana Field",      city: "St. Petersburg, FL",lat:27.7683,lon:-82.6534,  alt: 5,    dome: "fixed", team: "TB" },
-  140: { name: "Globe Life Field",     city: "Arlington, TX",  lat: 32.7472, lon: -97.0834,  alt: 186,  dome: "retractable", team: "TEX" },
-  141: { name: "Rogers Centre",        city: "Toronto, ON",    lat: 43.6414, lon: -79.3894,  alt: 76,   dome: "retractable", team: "TOR" },
-  120: { name: "Nationals Park",       city: "Washington, DC", lat: 38.8730, lon: -77.0074,  alt: 5,    dome: false, team: "WSH" },
-  144: { name: "Truist Park",          city: "Atlanta, GA",    lat: 33.8908, lon: -84.4677,  alt: 279,  dome: false, team: "ATL" },
-  146: { name: "loanDepot Park",       city: "Miami, FL",      lat: 25.7781, lon: -80.2196,  alt: 2,    dome: "retractable", team: "MIA" },
+  108:{name:"Angel Stadium",city:"Anaheim, CA",lat:33.8003,lon:-117.8827,alt:43,dome:false,team:"LAA",cfBearing:48},
+  109:{name:"Chase Field",city:"Phoenix, AZ",lat:33.4455,lon:-112.0667,alt:331,dome:"retractable",team:"ARI",cfBearing:0},
+  110:{name:"Camden Yards",city:"Baltimore, MD",lat:39.2839,lon:-76.6218,alt:14,dome:false,team:"BAL",cfBearing:30},
+  111:{name:"Fenway Park",city:"Boston, MA",lat:42.3467,lon:-71.0972,alt:5,dome:false,team:"BOS",cfBearing:45},
+  112:{name:"Wrigley Field",city:"Chicago, IL",lat:41.9484,lon:-87.6553,alt:181,dome:false,team:"CHC",cfBearing:32},
+  145:{name:"Rate Field",city:"Chicago, IL",lat:41.8299,lon:-87.6338,alt:180,dome:false,team:"CWS",cfBearing:124},
+  113:{name:"Great American BP",city:"Cincinnati, OH",lat:39.0979,lon:-84.5082,alt:164,dome:false,team:"CIN",cfBearing:60},
+  114:{name:"Progressive Field",city:"Cleveland, OH",lat:41.4962,lon:-81.6852,alt:177,dome:false,team:"CLE",cfBearing:0},
+  115:{name:"Coors Field",city:"Denver, CO",lat:39.7559,lon:-104.9942,alt:5200,dome:false,team:"COL",cfBearing:0},
+  116:{name:"Comerica Park",city:"Detroit, MI",lat:42.3390,lon:-83.0485,alt:180,dome:false,team:"DET",cfBearing:25},
+  117:{name:"Daikin Park",city:"Houston, TX",lat:29.7573,lon:-95.3555,alt:12,dome:"retractable",team:"HOU",cfBearing:20},
+  118:{name:"Kauffman Stadium",city:"Kansas City, MO",lat:39.0517,lon:-94.4803,alt:249,dome:false,team:"KC",cfBearing:0},
+  119:{name:"Dodger Stadium",city:"Los Angeles, CA",lat:34.0739,lon:-118.2400,alt:168,dome:false,team:"LAD",cfBearing:25},
+  158:{name:"American Family Field",city:"Milwaukee, WI",lat:43.0280,lon:-87.9712,alt:185,dome:"retractable",team:"MIL",cfBearing:38},
+  142:{name:"Target Field",city:"Minneapolis, MN",lat:44.9817,lon:-93.2776,alt:262,dome:false,team:"MIN",cfBearing:67},
+  121:{name:"Citi Field",city:"New York, NY",lat:40.7571,lon:-73.8458,alt:4,dome:false,team:"NYM",cfBearing:24},
+  147:{name:"Yankee Stadium",city:"New York, NY",lat:40.8296,lon:-73.9262,alt:5,dome:false,team:"NYY",cfBearing:78},
+  133:{name:"Sutter Health Park",city:"Sacramento, CA",lat:38.5802,lon:-121.5008,alt:10,dome:false,team:"ATH",cfBearing:60},
+  143:{name:"Citizens Bank Park",city:"Philadelphia, PA",lat:39.9061,lon:-75.1665,alt:7,dome:false,team:"PHI",cfBearing:10},
+  134:{name:"PNC Park",city:"Pittsburgh, PA",lat:40.4468,lon:-80.0057,alt:222,dome:false,team:"PIT",cfBearing:118},
+  135:{name:"Petco Park",city:"San Diego, CA",lat:32.7076,lon:-117.1570,alt:6,dome:false,team:"SD",cfBearing:34},
+  137:{name:"Oracle Park",city:"San Francisco, CA",lat:37.7786,lon:-122.3893,alt:4,dome:false,team:"SF",cfBearing:88},
+  136:{name:"T-Mobile Park",city:"Seattle, WA",lat:47.5914,lon:-122.3325,alt:4,dome:"retractable",team:"SEA",cfBearing:60},
+  138:{name:"Busch Stadium",city:"St. Louis, MO",lat:38.6226,lon:-90.1928,alt:142,dome:false,team:"STL",cfBearing:60},
+  139:{name:"Tropicana Field",city:"St. Petersburg, FL",lat:27.7683,lon:-82.6534,alt:5,dome:"fixed",team:"TB",cfBearing:45},
+  140:{name:"Globe Life Field",city:"Arlington, TX",lat:32.7472,lon:-97.0834,alt:186,dome:"retractable",team:"TEX",cfBearing:0},
+  141:{name:"Rogers Centre",city:"Toronto, ON",lat:43.6414,lon:-79.3894,alt:76,dome:"retractable",team:"TOR",cfBearing:348},
+  120:{name:"Nationals Park",city:"Washington, DC",lat:38.8730,lon:-77.0074,alt:5,dome:false,team:"WSH",cfBearing:30},
+  144:{name:"Truist Park",city:"Atlanta, GA",lat:33.8908,lon:-84.4677,alt:279,dome:false,team:"ATL",cfBearing:25},
+  146:{name:"loanDepot Park",city:"Miami, FL",lat:25.7781,lon:-80.2196,alt:2,dome:"retractable",team:"MIA",cfBearing:40},
 };
+
+// Stadiums highly sensitive to wind (open, low walls) get amplified effect
+const WIND_SENSITIVITY = { 112:1.6, 137:0.5, 158:0.3, 141:0.3, 113:1.2, 111:1.1 };
 
 // Team colors for flair
 const TEAM_COLORS = {
@@ -794,32 +798,45 @@ function degToCardinal(deg) {
   return dirs[Math.round(deg / 22.5) % 16];
 }
 
-// Park factor calc (simplified model)
-function calcParkFactor(weather, stadium) {
+// ── WIND MODEL (orientation-aware, matches Park Factors page) ──
+function windEffect(windFromDir, windSpeed, stadium, venueId) {
+  const windToDir = (windFromDir + 180) % 360;
+  let diff = Math.abs(windToDir - (stadium.cfBearing ?? 0));
+  if (diff > 180) diff = 360 - diff;
+  const alignment = Math.cos(diff * Math.PI / 180);
+  const sensitivity = WIND_SENSITIVITY[venueId] || 1.0;
+  const effectiveSpeed = Math.max(0, windSpeed - 3);
+  return alignment * effectiveSpeed * 0.55 * sensitivity;
+}
+
+function altitudeEffect(altFeet) {
+  if (altFeet <= 600) return 0;
+  return Math.min((altFeet - 600) / 1000 * 2.2, 18);
+}
+
+function tempEffect(tempF) {
+  return ((tempF - 70) / 10) * 2.2;
+}
+
+function calcParkFactor(weather, stadium, venueId) {
   if (stadium.dome === 'fixed') return { runs: 0, hr: 0, env: 'dome' };
 
-  const wind     = weather.windspeed;
-  const windDir  = weather.winddirection;
-  const temp     = weather.temperature;
-  const alt      = stadium.alt;
+  const windFrom = (weather.wind_direction_10m ?? weather.winddirection_10m) ?? 180;
+  const windSpd  = (weather.wind_speed_10m ?? weather.windspeed_10m) ?? 0;
+  const tempF    = weather.temperature_2m ?? 70;
 
-  // Altitude bonus (Coors effect)
-  const altBonus = Math.min((alt - 200) / 100 * 0.8, 12);
+  const wind = windEffect(windFrom, windSpd, stadium, venueId);
+  const alt  = altitudeEffect(stadium.alt);
+  const temp = tempEffect(tempF);
 
-  // Temp effect: every 10°F above 70 → +2% HR carry
-  const tempBonus = ((temp - 70) / 10) * 2;
+  const windFinal = stadium.dome === 'retractable' ? wind * 0.4 : wind;
 
-  // Wind: we simplify — positive = blowing out, negative = in
-  // Real model would use stadium orientation
-  const windFactor = (wind > 5) ? (wind - 5) * 0.4 : 0;
-  const windSign   = (windDir >= 45 && windDir <= 180) ? 1 : -1; // crude N/S split
-
-  const hrFactor  = +(altBonus + tempBonus + (windFactor * windSign)).toFixed(1);
-  const runFactor = +(hrFactor * 0.7).toFixed(1);
+  const hrFactor  = +(windFinal + alt + temp).toFixed(1);
+  const runFactor = +(hrFactor * 0.68).toFixed(1);
 
   let env = 'neutral';
-  if (hrFactor > 5)  env = 'hitting';
-  if (hrFactor < -3) env = 'pitching';
+  if (hrFactor > 6)  env = 'hitting';
+  if (hrFactor < -4) env = 'pitching';
 
   return { runs: runFactor, hr: hrFactor, env };
 }
@@ -1091,12 +1108,8 @@ async function init() {
     const weather = venueWeather[venueId];
     let pf = null;
 
-    if (weather && !stadium.dome) {
-      pf = calcParkFactor({
-        windspeed:    (weather.wind_speed_10m ?? weather.windspeed_10m) || 0,
-        winddirection:(weather.wind_direction_10m ?? weather.winddirection_10m) || 180,
-        temperature:  (weather.temperature_2m) || 70,
-      }, stadium);
+    if (weather && stadium.dome !== 'fixed') {
+      pf = calcParkFactor(weather, stadium, venueId);
       if (pf.env === 'hitting') hitterCount++;
       if (weather.temperature_2m) temps.push(weather.temperature_2m);
     }
