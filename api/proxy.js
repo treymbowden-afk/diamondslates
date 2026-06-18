@@ -45,6 +45,16 @@ export default async function handler(req, res) {
         `?type=${playerType}&year=${encodeURIComponent(year)}&position=&team=&min=1&csv=true`;
       isCsv = true;
 
+    } else if (type === 'exitvelo') {
+      // Exit Velocity & Barrels CSV: ?type=exitvelo&playerType=pitcher|batter&year=2025
+      // Adds: avg/max exit velocity, hard-hit %, barrel %, launch angle
+      const year = req.query.year || '2025';
+      const playerType = req.query.playerType === 'batter' ? 'batter' : 'pitcher';
+      upstreamUrl =
+        `https://baseballsavant.mlb.com/leaderboard/exit_velocity` +
+        `?type=${playerType}&year=${encodeURIComponent(year)}&position=&team=&min=1&csv=true`;
+      isCsv = true;
+
     } else {
       return res.status(400).json({ error: 'Unknown type' });
     }
