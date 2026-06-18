@@ -51,7 +51,7 @@ export default async function handler(req, res) {
       const year = req.query.year || '2025';
       const playerType = req.query.playerType === 'batter' ? 'batter' : 'pitcher';
       upstreamUrl =
-        `https://baseballsavant.mlb.com/leaderboard/exit_velocity` +
+        `https://baseballsavant.mlb.com/leaderboard/statcast` +
         `?type=${playerType}&year=${encodeURIComponent(year)}&position=&team=&min=1&csv=true`;
       isCsv = true;
 
