@@ -574,16 +574,22 @@ async function loadPlayer(mlbId, name, pos, team) {
   document.getElementById('initial-state').style.display = 'none';
 
   // Fetch player details + stats in parallel
-  const [details, statcastData, pitchArsenal] = await Promise.all([
+  const [details, statcastData, exitVelo, pitchArsenal] = await Promise.all([
     fetchPlayerDetails(mlbId),
     fetchStatcastStats(mlbId, currentType),
+    fetchExitVelo(mlbId, currentType),
     currentType === 'pitcher' ? fetchPitchArsenal(mlbId) : null,
   ]);
 
-  renderPlayerHeader(details, name, pos, team, statcastData);
-  renderArsenal(pitchArsenal, statcastData, currentType);
-  renderStatcastGrades(statcastData, currentType);
-  renderSeasonStats(statcastData, currentType);
+  // Merge exit-velocity & barrels data into the statcast row so all
+  // grades render from a single combined object
+  const combined = Object.assign({}, statcastData || {}, exitVelo || {});
+  const statcastMerged = Object.keys(combined).length ? combined : null;
+
+  renderPlayerHeader(details, name, pos, team, statcastMerged);
+  renderArsenal(pitchArsenal, statcastMerged, currentType);
+  renderStatcastGrades(statcastMerged, currentType);
+  renderSeasonStats(statcastMerged, currentType);
   renderMovementChart(pitchArsenal);
 
   hideLoading();
@@ -615,6 +621,16 @@ async function fetchPitchArsenal(mlbId) {
     const r   = await fetch(url);
     const txt = await r.text();
     return parsePitchCSV(txt, mlbId);
+  } catch { return null; }
+}
+
+// Exit Velocity & Barrels leaderboard (avg/max EV, hard-hit%, barrel%, launch angle)
+async function fetchExitVelo(mlbId, type) {
+  try {
+    const url = `/api/proxy?type=exitvelo&playerType=${type}&year=2025`;
+    const r   = await fetch(url);
+    const txt = await r.text();
+    return parseCSV(txt, mlbId);
   } catch { return null; }
 }
 
@@ -818,34 +834,32 @@ function renderStatcastGrades(row, type) {
 
   const metrics = type === 'pitcher' ? [
     { key: 'xera',         label: 'xERA',         desc: 'Expected ERA', invert: true },
-    { key: 'xba',          label: 'xBA Against',   desc: 'Expected batting avg vs', invert: true },
-    { key: 'xslg',         label: 'xSLG Against',  desc: 'Expected slug vs', invert: true },
-    { key: 'xwoba',        label: 'xwOBA Against', desc: 'Expected wOBA vs', invert: true },
-    { key: 'k_percent',    label: 'K%',            desc: 'Strikeout rate', invert: false },
-    { key: 'bb_percent',   label: 'BB%',           desc: 'Walk rate', invert: true },
-    { key: 'hard_hit_percent', label: 'Hard Hit% Against', desc: 'Hard hit balls allowed', invert: true },
-    { key: 'barrel_batted_rate', label: 'Barrel% Against', desc: 'Barrels allowed', invert: true },
-    { key: 'avg_best_speed', label: 'Exit Velo Against', desc: 'Avg exit velocity vs', invert: true },
-    { key: 'avg_hyper_speed', label: 'Max EV Against', desc: 'Max exit velocity vs', invert: true },
+    { key: 'est_ba',       label: 'xBA Against',   desc: 'Expected batting avg vs', invert: true },
+    { key: 'est_slg',      label: 'xSLG Against',  desc: 'Expected slug vs', invert: true },
+    { key: 'est_woba',     label: 'xwOBA Against', desc: 'Expected wOBA vs', invert: true },
+    { key: 'ev95percent',  label: 'Hard Hit% Against', desc: '95+ mph contact allowed', invert: true },
+    { key: 'brl_percent',  label: 'Barrel% Against',   desc: 'Barrels allowed per BBE', invert: true },
+    { key: 'avg_hit_speed', label: 'Exit Velo Against', desc: 'Avg exit velocity vs', invert: true },
+    { key: 'max_hit_speed', label: 'Max EV Against',     desc: 'Hardest hit allowed', invert: true },
   ] : [
     { key: 'est_ba',        label: 'xBA',          desc: 'Expected batting avg', invert: false },
     { key: 'est_slg',       label: 'xSLG',         desc: 'Expected slugging', invert: false },
     { key: 'est_woba',      label: 'xwOBA',        desc: 'Expected wOBA', invert: false },
-    { key: 'barrel_batted_rate', label: 'Barrel%', desc: 'Barrel rate on contact', invert: false },
-    { key: 'hard_hit_percent',   label: 'Hard Hit%', desc: '95+ mph exit velo', invert: false },
-    { key: 'avg_best_speed',     label: 'Avg EV',  desc: 'Average exit velocity', invert: false },
-    { key: 'avg_hyper_speed',    label: 'Max EV',  desc: 'Max exit velocity', invert: false },
-    { key: 'launch_angle_avg',   label: 'Avg LA',  desc: 'Average launch angle', invert: false },
-    { key: 'k_percent',          label: 'K%',       desc: 'Strikeout rate', invert: true },
-    { key: 'bb_percent',         label: 'BB%',      desc: 'Walk rate', invert: false },
+    { key: 'brl_percent',   label: 'Barrel%',      desc: 'Barrels per batted ball', invert: false },
+    { key: 'ev95percent',   label: 'Hard Hit%',    desc: '95+ mph contact rate', invert: false },
+    { key: 'avg_hit_speed', label: 'Avg EV',       desc: 'Average exit velocity', invert: false },
+    { key: 'max_hit_speed', label: 'Max EV',       desc: 'Max exit velocity', invert: false },
+    { key: 'avg_hit_angle', label: 'Avg LA',       desc: 'Average launch angle', invert: false },
+    { key: 'anglesweetspotpercent', label: 'Sweet Spot%', desc: 'Ideal launch angle rate', invert: false },
   ];
 
   // MLB averages for context
   const AVG = {
-    xba: .245, est_ba: .245, xslg: .390, est_slg: .390,
-    xwoba: .315, est_woba: .315, barrel_batted_rate: 8.0,
-    hard_hit_percent: 35.0, avg_best_speed: 88.5, avg_hyper_speed: 103,
-    k_percent: 22, bb_percent: 8.5, xera: 4.00, launch_angle_avg: 12,
+    est_ba: .245, est_slg: .390, est_woba: .315,
+    brl_percent: 6.5, ev95percent: 38.0,
+    avg_hit_speed: 88.5, max_hit_speed: 108,
+    avg_hit_angle: 12, anglesweetspotpercent: 33,
+    xera: 4.00,
   };
 
   let html = `<div class="section-hdr"><span class="section-hdr-title">STATCAST GRADES</span><div class="section-hdr-line"></div></div>
