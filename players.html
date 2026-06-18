@@ -621,7 +621,7 @@ async function fetchPitchArsenal(mlbId) {
 function parseCSV(csv, targetId) {
   const lines = csv.split('\n').filter(Boolean);
   if (lines.length < 2) return null;
-  const headers = lines[0].split(',').map(h => h.trim().replace(/"/g,''));
+  const headers = splitCSVLine(lines[0]).map(h => h.replace(/"/g,''));
   for (let i = 1; i < lines.length; i++) {
     const vals = splitCSVLine(lines[i]);
     if (!vals.length) continue;
@@ -635,7 +635,7 @@ function parseCSV(csv, targetId) {
 function parsePitchCSV(csv, targetId) {
   const lines = csv.split('\n').filter(Boolean);
   if (lines.length < 2) return [];
-  const headers = lines[0].split(',').map(h => h.trim().replace(/"/g,''));
+  const headers = splitCSVLine(lines[0]).map(h => h.replace(/"/g,''));
   const rows = [];
   for (let i = 1; i < lines.length; i++) {
     const vals = splitCSVLine(lines[i]);
@@ -760,18 +760,21 @@ function renderArsenal(pitchRows, statcastRow, type) {
   let cardsHtml = '<div class="arsenal-grid">';
 
   for (const row of pitchRows) {
-    const pt   = (row['pitch_type'] || row['pitch_name'] || 'FA').trim();
-    const pName= PITCH_NAMES[pt] || pt;
-    const usage= parseFloat(row['pitches'] || row['pitch_percent'] || 0);
-    const vel  = parseFloat(row['avg_speed'] || row['release_speed'] || 0);
-    const spin = parseFloat(row['avg_spin'] || row['release_spin_rate'] || 0);
-    const whiff= parseFloat(row['whiff_percent'] || row['whiff_pct'] || 0);
-    const rv   = parseFloat(row['run_value_per_100'] || row['run_value'] || 0);
+    const pt   = (row['pitch_type'] || 'FA').trim();
+    const pName= row['pitch_name'] || PITCH_NAMES[pt] || pt;
+    const usagePct = parseFloat(row['pitch_usage'] || 0);
+    const whiff= parseFloat(row['whiff_percent'] || 0);
+    const rv   = parseFloat(row['run_value_per_100'] || 0);
+    const baAgainst  = row['ba'] || '';
+    const slgAgainst = row['slg'] || '';
+    const kPct = parseFloat(row['k_percent'] || 0);
     const color= PITCH_COLORS[pt] || '#888';
 
-    // Usage is total pitches; we need to calc % across all pitches
-    const totalPitches = pitchRows.reduce((s,r) => s + parseFloat(r['pitches'] || 0), 0);
-    const usagePct = totalPitches > 0 ? (usage / totalPitches * 100) : 0;
+    const fmtAvg = (v) => {
+      if (v === '' || v == null) return '—';
+      const n = parseFloat(v);
+      return isNaN(n) ? '—' : n.toFixed(3).replace(/^0\./, '.');
+    };
 
     cardsHtml += `
     <div class="pitch-card pitch-${pt}">
@@ -783,26 +786,26 @@ function renderArsenal(pitchRows, statcastRow, type) {
       <div class="pitch-usage-pct">${usagePct.toFixed(1)}% usage</div>
       <div class="pitch-stats">
         <div class="pitch-stat-row">
-          <span class="ps-label">Velocity</span>
-          <span class="ps-val">${vel ? vel.toFixed(1) + ' mph' : '—'}</span>
-        </div>
-        <div class="pitch-stat-row">
-          <span class="ps-label">Spin Rate</span>
-          <span class="ps-val">${spin ? Math.round(spin) + ' rpm' : '—'}</span>
+          <span class="ps-label">Run Value/100</span>
+          <span class="ps-val" style="color:${rv < 0 ? '#3CCF74' : rv > 0 ? '#E05555' : 'var(--text)'}">${row['run_value_per_100'] ? (rv > 0 ? '+' : '') + rv.toFixed(1) : '—'}</span>
         </div>
         <div class="pitch-stat-row">
           <span class="ps-label">Whiff %</span>
-          <span class="ps-val" style="color:${whiff > 30 ? '#3CCF74' : whiff < 15 ? '#E05555' : 'var(--text)'}">${whiff ? whiff.toFixed(1) + '%' : '—'}</span>
+          <span class="ps-val" style="color:${whiff > 30 ? '#3CCF74' : whiff < 15 && whiff > 0 ? '#E05555' : 'var(--text)'}">${row['whiff_percent'] ? whiff.toFixed(1) + '%' : '—'}</span>
         </div>
         <div class="pitch-stat-row">
-          <span class="ps-label">Run Value/100</span>
-          <span class="ps-val" style="color:${rv < 0 ? '#3CCF74' : rv > 0 ? '#E05555' : 'var(--text)'}">${rv ? (rv > 0 ? '+' : '') + rv.toFixed(1) : '—'}</span>
+          <span class="ps-label">AVG Against</span>
+          <span class="ps-val">${fmtAvg(baAgainst)}</span>
+        </div>
+        <div class="pitch-stat-row">
+          <span class="ps-label">SLG Against</span>
+          <span class="ps-val">${fmtAvg(slgAgainst)}</span>
         </div>
       </div>
     </div>`;
   }
   cardsHtml += '</div>';
-  el.innerHTML = sectionHdr + cardsHtml;
+  el.innerHTML = sectionHdr + cardsHtml + `<p style="font-size:11px;color:var(--text-muted);margin-top:4px;">Run Value/100: negative = good for the pitcher (run prevention). Whiff %: swing-and-miss rate. AVG/SLG Against: what hitters do against each pitch.</p>`;
 }
 
 // ── RENDER STATCAST GRADES ──
